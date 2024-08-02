@@ -1,5 +1,5 @@
 [package]
-name = "rust-microservice"
+name = "ceres"
 version = "0.1.0"
 edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -14,7 +14,6 @@ actix-web = "4.4"
 anyhow = { version = "1.0", features = ["backtrace"] }
 chrono =  { version = "0.4", features = ["serde"] }
 clap = { version = "4.4", features = ["derive", "env"] }
-diesel = { version = "2.1", features = ["postgres", "chrono", "r2d2", "numeric"] }
 futures-core = "0.3"
 futures-util = "0.3"
 rdkafka = "0.36"

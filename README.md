@@ -1,14 +1,5 @@
 
-# Rust microservice template
-
-A sample Rust project, which should be used to boostrap a new microservice including the following features:
-
-- Actix web server
-- Diesel Postgres integration
-- Migrations job
-- K8s deployment
-- Codefresh pipeline with integration tests
-- Optimized Docker build with cargo chef
+# Ceres
 
 ## How to setup your project
 

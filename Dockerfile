@@ -1,4 +1,4 @@
-FROM rust:1.74-slim-bullseye AS chef
+FROM rust:1.78-slim-bullseye AS chef
 # We only pay the installation cost once, it will be cached from the second build onwards.
 # It is the same version as credimi/diesel-migrations: so, keep both versions aligned for caching.
 RUN cargo install cargo-chef
