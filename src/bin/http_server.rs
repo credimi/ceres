@@ -2,10 +2,10 @@ use std::io::Result as IoResult;
 
 use actix_web::web::Data;
 use actix_web::{get, App, HttpResponse, HttpServer};
-use clap::Parser;
 use ceres::qrp::cerved_qrp::CervedQrpClient;
 use ceres::routes::*;
 use ceres::utils::logging::*;
+use clap::Parser;
 
 #[actix_web::main]
 async fn main() -> IoResult<()> {
@@ -27,9 +27,9 @@ async fn main() -> IoResult<()> {
             .service(healthz)
             .service(call_cerved_qrp)
     })
-        .bind(listen_addr)?
-        .run()
-        .await
+    .bind(listen_addr)?
+    .run()
+    .await
 }
 
 #[get("/api/v1/healthz")]

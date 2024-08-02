@@ -12,9 +12,7 @@ use slog::info;
 use uuid::Uuid;
 
 #[derive(Debug, Parser)]
-pub struct Cli {
-
-}
+pub struct Cli {}
 
 pub struct AppConfig {
     pub log: Logger,
@@ -31,7 +29,6 @@ pub struct InternalError {
     pub kind: ErrorKind,
     pub reason: String,
 }
-
 
 #[derive(Deserialize)]
 #[allow(non_snake_case)]
@@ -69,7 +66,6 @@ pub async fn call_cerved_qrp(
 
     match result {
         Ok(_) => {
-
             let qrp_req_pdf = QrpRequest::builder()
                 .reference(reference)
                 .product_id(QrpProduct::QRP)
@@ -84,9 +80,12 @@ pub async fn call_cerved_qrp(
             let result_pdf = qrp_client.generate_qrp(&qrp_req_pdf).await;
             match result_pdf {
                 Ok(res) => Ok(HttpResponse::Ok().json(res)),
-                Err(_) => Ok(HttpResponse::BadGateway().json(json!({ "message": "unable to retrieve PDF", "reference":  reference }))),
+                Err(_) => Ok(HttpResponse::BadGateway()
+                    .json(json!({ "message": "unable to retrieve PDF", "reference":  reference }))),
             }
-        },
-        Err(_) => Ok(HttpResponse::BadGateway().json(json!({ "message": "unable to retrieve XML", "reference":  reference }))),
+        }
+        Err(_) => Ok(
+            HttpResponse::BadGateway().json(json!({ "message": "unable to retrieve XML", "reference":  reference }))
+        ),
     }
 }
