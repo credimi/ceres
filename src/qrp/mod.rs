@@ -64,8 +64,8 @@ enum DeliveryStatus {
 
 #[derive(Serialize, Deserialize)]
 pub struct QrpResponse {
-    content: Option<String>,
+    pub content: Option<String>,
     delivery_status: DeliveryStatus,
     format: QrpFormat,
-    request_id: u32,
+    pub request_id: u32,
 }

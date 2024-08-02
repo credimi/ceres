@@ -17,7 +17,8 @@ impl CervedQrpClient {
         }
     }
 
-    pub async fn generate_qrp(&self, qrp_request: &QrpRequest) -> anyhow::Result<QrpResponse> {
+    /// Generates the QRP. Retries the call when the response is in status "deferred"
+    pub async fn generate_qrp_with_retry(&self, qrp_request: &QrpRequest) -> anyhow::Result<QrpResponse> {
         let _token = self.oauth_client.get_access_token();
         let token = _token.clone();
         let qrp_response = self
@@ -37,7 +38,7 @@ impl CervedQrpClient {
                 let token = _token;
                 let request_id = qrp_response.request_id;
                 let format = qrp_response.format;
-                let to_retry = || async { self.read_qrp(&token, &format, request_id).await };
+                let to_retry = || async { self.read_qrp(&token, request_id, &format).await };
                 Ok(to_retry
                     .retry(&ExponentialBuilder::default().with_max_times(10))
                     .when(|err| err.to_string() == "deferred")
@@ -46,7 +47,18 @@ impl CervedQrpClient {
         }
     }
 
-    async fn read_qrp(&self, token: &String, format: &QrpFormat, request_id: u32) -> anyhow::Result<QrpResponse> {
+    /// Read the QRP with request_id in the specified format. Retries the call when the response is in status "deferred"
+    pub async fn read_qrp_with_retry(&self, request_id: u32, format: &QrpFormat) -> anyhow::Result<QrpResponse> {
+        let token = self.oauth_client.get_access_token();
+        let to_retry = || async { self.read_qrp(&token, request_id, &format).await };
+        Ok(to_retry
+            .retry(&ExponentialBuilder::default().with_max_times(10))
+            .when(|err| err.to_string() == "deferred")
+            .await?)
+    }
+
+    /// Read the QRP with request_id in the specified format. If the response status is "deferred", returns an error so that the call can be retried
+    async fn read_qrp(&self, token: &String, request_id: u32, format: &QrpFormat) -> anyhow::Result<QrpResponse> {
         let res = self
             .http_client
             .get(format!(

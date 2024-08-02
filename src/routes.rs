@@ -61,25 +61,22 @@ pub async fn call_cerved_qrp(
         .tax_code(None)
         .build();
 
-    info!(log, "Requesting qrp XML for user {} with req: {:?}", user, &qrp_req);
-    let result = qrp_client.generate_qrp(&qrp_req).await;
+    info!(log, "Requesting QRP XML for user {} with req: {:?}", user, &qrp_req);
+    let result = qrp_client.generate_qrp_with_retry(&qrp_req).await;
 
     match result {
-        Ok(_) => {
-            let qrp_req_pdf = QrpRequest::builder()
-                .reference(reference)
-                .product_id(QrpProduct::QRP)
-                .format(QrpFormat::PDF)
-                .subject_type(SubjectType::COMPANY)
-                .vat_number(Some(vat_number))
-                .tax_code(None)
-                .build();
-
-            info!(log, "Requesting qrp PDF for user {} with req: {:?}", user, &qrp_req_pdf);
-            // FIXME: for the PDF, just call read_qrp
-            let result_pdf = qrp_client.generate_qrp(&qrp_req_pdf).await;
+        Ok(res) => {
+            // TODO: save XML on S3
+            info!(
+                log,
+                "Requesting QRP PDF for user {} with requestId: {:?}", user, res.request_id
+            );
+            let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, &QrpFormat::PDF).await;
             match result_pdf {
-                Ok(res) => Ok(HttpResponse::Ok().json(res)),
+                Ok(pdf) => {
+                    // TODO: save PDF on S3
+                    Ok(HttpResponse::Ok().json(pdf))
+                },
                 Err(_) => Ok(HttpResponse::BadGateway()
                     .json(json!({ "message": "unable to retrieve PDF", "reference":  reference }))),
             }
