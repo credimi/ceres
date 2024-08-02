@@ -5,18 +5,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dev-dependencies]
-actix-http = "3.5"
-actix-rt = "2.9"
+actix-http = "3.8"
+actix-rt = "2.10"
 actix-service = "2"
 
 [dependencies]
-actix-web = "4.4"
+actix-web = "4.8"
 anyhow = { version = "1.0", features = ["backtrace"] }
+backon = "0.4"
 chrono =  { version = "0.4", features = ["serde"] }
 clap = { version = "4.4", features = ["derive", "env"] }
 futures-core = "0.3"
 futures-util = "0.3"
-rdkafka = "0.36"
+reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 slog = "2.7"
@@ -24,7 +25,9 @@ slog-async = "2.8"
 slog-envlogger = "2.2"
 slog-json = "2.6"
 tokio = { version = "1 ", features = ["macros", "rt"] }
+typed-builder = "0.19"
 url = "2.5"
+uuid = { version = "1.10", features = ["fast-rng", "v4", "serde"] }
 
 [[bin]]
 name = "http_server"
