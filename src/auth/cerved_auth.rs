@@ -33,7 +33,6 @@ async fn request_new_token(
     cerved_base_url: &String,
     cerved_oauth_config: &CervedOAuthConfig,
 ) -> anyhow::Result<CervedAuthRes> {
-    // TODO: build from configuration
     let url = format!(
         "{}/cas/oauth/token?grant_type=password&client_id=cerved-client&username={}&password={}",
         cerved_base_url, cerved_oauth_config.username, cerved_oauth_config.password

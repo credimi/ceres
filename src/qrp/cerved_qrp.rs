@@ -26,7 +26,6 @@ impl CervedQrpClient {
         let token = _token.clone();
         let qrp_response = self
             .http_client
-            // TODO: move into configuration
             .post(format!("{}/cervedApiB2B/v1/purchase", self.cerved_base_url))
             .bearer_auth(token)
             .json(qrp_request)
@@ -65,7 +64,6 @@ impl CervedQrpClient {
         let res = self
             .http_client
             .get(format!(
-                // TODO: move into configuration
                 "{}/cervedApiB2B/v1/purchase/request/{}/format/{}",
                 self.cerved_base_url, request_id, format
             ))
