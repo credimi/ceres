@@ -27,7 +27,7 @@ impl CervedQrpClient {
         let qrp_response = self
             .http_client
             // TODO: move into configuration
-            .post("http://localhost:3001/cervedApiB2B/v1/purchase")
+            .post(format!("{}/cervedApiB2B/v1/purchase", self.cerved_base_url))
             .bearer_auth(token)
             .json(qrp_request)
             .send()
@@ -66,8 +66,8 @@ impl CervedQrpClient {
             .http_client
             .get(format!(
                 // TODO: move into configuration
-                "http://localhost:3001/cervedApiB2B/v1/purchase/request/{}/format/{}",
-                request_id, format
+                "{}/cervedApiB2B/v1/purchase/request/{}/format/{}",
+                self.cerved_base_url, request_id, format
             ))
             .bearer_auth(token)
             .send()
