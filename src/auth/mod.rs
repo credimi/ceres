@@ -1,3 +1,4 @@
+use clap::Parser;
 use serde::Deserialize;
 
 pub mod cerved_auth;
@@ -9,4 +10,12 @@ struct CervedAuthRes {
     token_type: String,
     scope: String,
     expires_in: u32,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct CervedOAuthConfig {
+    #[arg(long, env)]
+    pub username: String,
+    #[arg(long, env)]
+    pub password: String,
 }

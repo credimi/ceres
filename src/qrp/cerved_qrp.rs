@@ -1,4 +1,5 @@
 use crate::auth::cerved_auth::CervedOAuthClient;
+use crate::auth::CervedOAuthConfig;
 use crate::qrp::{DeliveryStatus, QrpFormat, QrpRequest, QrpResponse};
 use anyhow::anyhow;
 use backon::{ExponentialBuilder, Retryable};
@@ -6,20 +7,22 @@ use backon::{ExponentialBuilder, Retryable};
 #[derive(Clone)]
 pub struct CervedQrpClient {
     http_client: reqwest::Client,
-    oauth_client: CervedOAuthClient,
+    cerved_base_url: String,
+    cerved_oauth_client: CervedOAuthClient,
 }
 
 impl CervedQrpClient {
-    pub async fn new(http_client: reqwest::Client) -> Self {
+    pub async fn new(http_client: reqwest::Client, base_url: &String, cerved_oauth_config: &CervedOAuthConfig) -> Self {
         CervedQrpClient {
             http_client: http_client.clone(),
-            oauth_client: CervedOAuthClient::new(&http_client).await,
+            cerved_base_url: base_url.clone(),
+            cerved_oauth_client: CervedOAuthClient::new(&http_client, &base_url, cerved_oauth_config).await,
         }
     }
 
     /// Generates the QRP. Retries the call when the response is in status "deferred"
     pub async fn generate_qrp_with_retry(&self, qrp_request: &QrpRequest) -> anyhow::Result<QrpResponse> {
-        let _token = self.oauth_client.get_access_token();
+        let _token = self.cerved_oauth_client.get_access_token();
         let token = _token.clone();
         let qrp_response = self
             .http_client
@@ -49,7 +52,7 @@ impl CervedQrpClient {
 
     /// Read the QRP with request_id in the specified format. Retries the call when the response is in status "deferred"
     pub async fn read_qrp_with_retry(&self, request_id: u32, format: &QrpFormat) -> anyhow::Result<QrpResponse> {
-        let token = self.oauth_client.get_access_token();
+        let token = self.cerved_oauth_client.get_access_token();
         let to_retry = || async { self.read_qrp(&token, request_id, &format).await };
         Ok(to_retry
             .retry(&ExponentialBuilder::default().with_max_times(10))

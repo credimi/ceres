@@ -1,5 +1,6 @@
 use std::io::Result as IoResult;
 
+use crate::auth::CervedOAuthConfig;
 use crate::qrp::cerved_qrp::CervedQrpClient;
 use crate::qrp::{QrpFormat, QrpProduct, QrpRequest, SubjectType};
 use crate::utils::logging::Logger;
@@ -12,7 +13,18 @@ use slog::info;
 use uuid::Uuid;
 
 #[derive(Debug, Parser)]
-pub struct Cli {}
+pub struct Cli {
+    #[command(flatten)]
+    pub http_client_config: HttpClientConfig,
+    #[command(flatten)]
+    pub cerved_oauth_config: CervedOAuthConfig,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct HttpClientConfig {
+    #[arg(long, env)]
+    pub cerved_base_url: String,
+}
 
 pub struct AppConfig {
     pub log: Logger,
@@ -76,7 +88,7 @@ pub async fn call_cerved_qrp(
                 Ok(pdf) => {
                     // TODO: save PDF on S3
                     Ok(HttpResponse::Ok().json(pdf))
-                },
+                }
                 Err(_) => Ok(HttpResponse::BadGateway()
                     .json(json!({ "message": "unable to retrieve PDF", "reference":  reference }))),
             }
