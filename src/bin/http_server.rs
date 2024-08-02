@@ -1,8 +1,9 @@
 use std::io::Result as IoResult;
 
+use actix_web::web::Data;
 use actix_web::{get, App, HttpResponse, HttpServer};
 use clap::Parser;
-
+use ceres::qrp::cerved_qrp::CervedQrpClient;
 use ceres::routes::*;
 use ceres::utils::logging::*;
 
@@ -14,16 +15,21 @@ async fn main() -> IoResult<()> {
     let listen_addr = std::env::var("HTTP_SERVER_LISTEN_ADDR").expect("Missing required HTTP_SERVER_LISTEN_ADDR");
 
     info!(log, "Start server @ {}", listen_addr; "listen_addr" => ?listen_addr);
+
+    let http_client = reqwest::Client::new();
+    let cerved_qrp_client = CervedQrpClient::new(http_client).await;
     HttpServer::new(move || {
         App::new()
-            .app_data(AppConfig {
+            .app_data(Data::new(AppConfig {
                 log: log.clone(),
-            })
+                cerved_qrp_client: cerved_qrp_client.clone(),
+            }))
             .service(healthz)
+            .service(call_cerved_qrp)
     })
-    .bind(listen_addr)?
-    .run()
-    .await
+        .bind(listen_addr)?
+        .run()
+        .await
 }
 
 #[get("/api/v1/healthz")]
