@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:12.16
+    ports:
+      - '5552:5432'
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-U", "user" ]
+  migrations:
+    image: willsquire/diesel-cli
+    volumes:
+      - ./migrations:/app/migrations
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/db
+    command:
+      - setup
+    depends_on:
+      postgres:
+        condition: service_healthy

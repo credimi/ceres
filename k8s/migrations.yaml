@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{CF_REPO_NAME}}-migrations
+  labels:
+    app: {{CF_REPO_NAME}}
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: {{CF_REPO_NAME}}
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-instapartners
+      containers:
+        - name: {{CF_REPO_NAME}}-migrations
+          image: credimi/{{CF_REPO_NAME}}-migrations:{{CF_SHORT_REVISION}}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_ADMIN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{CF_REPO_NAME}}-secrets
+                  key: admin_db_password
+            - name: DB_ADMIN_USER
+              value: {{DB_ADMIN_USER}}
+            - name: DB_HOST
+              value: {{DB_HOST}}
+            - name: DB_PORT
+              value: "{{DB_PORT}}"
+            - name: DB_NAME
+              value: {{DB_NAME}}
+            - name: DB_USER_PASS_RW
+              valueFrom:
+                secretKeyRef:
+                  name: {{CF_REPO_NAME}}-secrets
+                  key: db_password_rw
+            - name: DB_USER_PASS_RO
+              valueFrom:
+                secretKeyRef:
+                  name: {{CF_REPO_NAME}}-secrets
+                  key: db_password_ro
+            - name: DB_USER
+              value: {{DB_USER}}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 10M
+            requests:
+              cpu: 10m
+              memory: 5M
+      restartPolicy: Never

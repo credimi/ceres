@@ -1,0 +1,102 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{CF_REPO_NAME}}
+  annotations:
+    alb.ingress.kubernetes.io/group.name: {{INGRESS_CLASS}}
+    alb.ingress.kubernetes.io/group.order: "100"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "{{EKS_ACM_ARN}}"
+    alb.ingress.kubernetes.io/healthcheck-path: "/healthz"
+spec:
+  ingressClassName: {{INGRESS_CLASS}}
+  rules:
+    - host: {{HOST}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{CF_REPO_NAME}}
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{CF_REPO_NAME}}
+  name: {{CF_REPO_NAME}}
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  selector:
+    app: {{CF_REPO_NAME}}
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{CF_REPO_NAME}}
+  name: {{CF_REPO_NAME}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{CF_REPO_NAME}}
+  template:
+    metadata:
+      labels:
+        app: {{CF_REPO_NAME}}
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-instapartners
+      containers:
+        - name: {{CF_REPO_NAME}}
+          image: credimi/{{CF_REPO_NAME}}:{{CF_SHORT_REVISION}}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RUST_BACKTRACE
+              value: "1"
+            - name: RUST_LOG
+              value: info
+            - name: DB_USER
+              value: {{DB_USER}}
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{CF_REPO_NAME}}-secrets
+                  key: db_password_rw
+            - name: DB_HOST
+              value: {{DB_HOST}}
+            - name: DB_PORT
+              value: "{{DB_PORT}}"
+            - name: DB_NAME
+              value: {{DB_NAME}}
+            - name: HTTP_SERVER_LISTEN_ADDR
+              value: {{HTTP_SERVER_LISTEN_ADDR}}
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: 8080
+            initialDelaySeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi

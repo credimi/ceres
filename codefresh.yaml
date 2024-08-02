@@ -1,0 +1,178 @@
+version: "1.0"
+
+stages:
+  - init
+  - build
+  - publish
+  - prepare_deploy
+  - deploy
+
+steps:
+  main_clone:
+    stage: init
+    type: git-clone
+    repo: "${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}"
+    revision: "${{CF_REVISION}}"
+    git: github
+
+  set_common_vars:
+    stage: init
+    image: alpine:latest
+    commands:
+      - cf_export INGRESS_CLASS="internal-ingress"
+      - cf_export DB_PORT="5432"
+      - cf_export DB_ADMIN_USER="rdsdbadmin"
+      - cf_export DB_USER=${{CF_REPO_NAME}} # note: this is the prefix of both the RW and RO users that will be created
+      - cf_export HTTP_SERVER_LISTEN_ADDR="0.0.0.0:8080"
+
+  set_production_vars:
+    stage: init
+    image: alpine:latest
+    commands:
+      - cf_export K8S_CLUSTER="credimi-prod"
+      - cf_export EKS_ACM_ARN=${{PROD_EKS_ACM_ARN}}
+      - cf_export NAMESPACE="prod"
+      - cf_export HOST="{{CF_REPO_NAME}}.private.bancacfplus.it"
+      - cf_export DB_HOST="prod-postgres-0.cy8ip29re6ph.eu-west-1.rds.amazonaws.com"
+      - cf_export DB_NAME="rust-microservice"
+    when:
+      branch:
+        only:
+          - /^release-[0-9]{8}[a-z]*$/
+
+  set_staging_vars:
+    stage: init
+    image: alpine:latest
+    commands:
+      - cf_export K8S_CLUSTER="credimi-qa"
+      - cf_export EKS_ACM_ARN=${{QA_EKS_ACM_ARN}}
+      - cf_export NAMESPACE="${{CF_BRANCH_TAG_NORMALIZED}}"
+      - cf_export HOST="${{CF_BRANCH_TAG_NORMALIZED}}-{{CF_REPO_NAME}}.qa.private.bancacfplus.it"
+      - cf_export DB_HOST="qa-postgres-0.c1ohp1tvlyxc.eu-west-1.rds.amazonaws.com"
+      - cf_export DB_NAME="${{CF_BRANCH_TAG_NORMALIZED}}-rust-microservice"
+    when: &is_not_release
+      branch:
+        ignore:
+          - /^release-[0-9]{8}[a-z]*$/
+
+  check_docker_image_existence:
+    stage: build
+    type: freestyle
+    image: credimi/codefresh-verify-image:773ff8a
+    environment:
+      - IMAGE_NAME=${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}
+
+  build_app_image:
+    stage: build
+    type: build
+    dockerfile: Dockerfile
+    target: runtime
+    image_name: ${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}
+    tag: ${{CF_SHORT_REVISION}}
+    no_cache: false
+    no_cf_cache: false
+    disable_push: true
+    when: &image_not_already_built
+      condition:
+        all:
+          imageExists: "${{IMAGE_EXISTS}} == false"
+
+  build_migrations_image:
+    stage: build
+    type: build
+    dockerfile: Dockerfile
+    target: migrations
+    image_name: ${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}-migrations
+    tag: ${{CF_SHORT_REVISION}}
+    disable_push: true
+    when: *image_not_already_built
+
+  build_tests_image:
+    stage: build
+    type: build
+    dockerfile: Dockerfile
+    target: builder
+    image_name: ${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}-tests
+    tag: ${{CF_SHORT_REVISION}}
+    disable_push: true
+    when: *image_not_already_built
+
+  run_tests:
+    stage: build
+    type: composition
+    composition:
+      version: '3.0'
+      services:
+        postgres:
+          image: postgres:12.16
+          ports:
+            - 5432
+          environment:
+            POSTGRES_DB: db
+            POSTGRES_USER: user
+            POSTGRES_PASSWORD: password
+        migrations:
+          image: ${{build_migrations_image}}
+          environment:
+            DATABASE_URL: postgres://user:password@postgres:5432/db
+          command: -c "sleep 5s && dockerize -wait tcp://postgres:5432 -timeout 60s && diesel setup && diesel migration run"
+          depends_on:
+            - postgres
+    composition_candidates:
+      run_tests:
+        image: ${{build_tests_image}}
+        environment:
+          DB_USER: user
+          DB_PASS: password
+          DB_PORT: 5432
+          DB_HOST: postgres
+          DB_NAME: db
+        command: sh -c "sleep 5s && cargo test --release --no-fail-fast"
+        depends_on:
+          - postgres
+          - migrations
+    when: *image_not_already_built
+
+  publish_images:
+    stage: publish
+    type: parallel
+    steps:
+      publish_migrations_image:
+        type: push
+        candidate: ${{build_migrations_image}}
+        tags:
+          - ${{CF_SHORT_REVISION}}
+          - ${{CF_BRANCH_TAG_NORMALIZED}}
+      publish_app_image:
+        type: push
+        candidate: ${{build_app_image}}
+        tags:
+          - ${{CF_SHORT_REVISION}}
+          - ${{CF_BRANCH_TAG_NORMALIZED}}
+    when: *image_not_already_built
+
+  create_namespace:
+    stage: prepare_deploy
+    image: credimi/codefresh-deploy:${{CODEFRESH_DEPLOY_VERSION}}
+    environment:
+      - YAML_PATH=./k8s/namespace.yaml
+    when: *is_not_release
+
+  copy_secrets:
+    stage: prepare_deploy
+    image: credimi/codefresh-copy-secrets:${{CODEFRESH_DEPLOY_VERSION}}
+    environment:
+      - OTHER_SECRETS=${{CF_REPO_NAME}}-secrets
+    when: *is_not_release
+
+  run_migrations:
+    stage: deploy
+    image: credimi/codefresh-deploy-job:${{CODEFRESH_DEPLOY_VERSION}}
+    environment:
+      - JOB_YAML_PATH=./k8s/migrations.yaml
+
+  deploy_app:
+    stage: deploy
+    image: credimi/codefresh-deploy:${{CODEFRESH_DEPLOY_VERSION}}
+    environment:
+      - YAML_PATH=./k8s/deployment.yaml

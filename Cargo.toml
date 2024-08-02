@@ -1,0 +1,32 @@
+[package]
+name = "rust-microservice"
+version = "0.1.0"
+edition = "2021"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dev-dependencies]
+actix-http = "3.5"
+actix-rt = "2.9"
+actix-service = "2"
+
+[dependencies]
+actix-web = "4.4"
+anyhow = { version = "1.0", features = ["backtrace"] }
+chrono =  { version = "0.4", features = ["serde"] }
+clap = { version = "4.4", features = ["derive", "env"] }
+diesel = { version = "2.1", features = ["postgres", "chrono", "r2d2", "numeric"] }
+futures-core = "0.3"
+futures-util = "0.3"
+rdkafka = "0.36"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+slog = "2.7"
+slog-async = "2.8"
+slog-envlogger = "2.2"
+slog-json = "2.6"
+tokio = { version = "1 ", features = ["macros", "rt"] }
+url = "2.5"
+
+[[bin]]
+name = "http_server"
+path = "src/bin/http_server.rs"
