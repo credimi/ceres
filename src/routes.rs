@@ -8,8 +8,6 @@ use crate::utils::logging::Logger;
 use actix_web::web::{Data, Path, Query};
 use actix_web::{post, HttpResponse};
 use base64::Engine;
-use chrono::format::Fixed::TimezoneName;
-use chrono::{DateTime, Utc};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -91,7 +89,7 @@ pub async fn call_cerved_qrp(
             let data = base64::engine::general_purpose::STANDARD
                 .decode(
                     res.content
-                        .expect(format!("No content found in response: {:?}", _res).as_str()),
+                        .unwrap_or_else(|| panic!("No content found in response: {:?}", _res)),
                 )
                 .expect("Invalid base64");
 
@@ -122,7 +120,7 @@ pub async fn call_cerved_qrp(
                     let data = base64::engine::general_purpose::STANDARD
                         .decode(
                             pdf.content
-                                .expect(format!("No content found in response: {:?}", _pdf).as_str()),
+                                .unwrap_or_else(|| panic!("No content found in response: {:?}", _pdf)),
                         )
                         .expect("Invalid base64");
 

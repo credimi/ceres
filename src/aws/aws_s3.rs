@@ -3,7 +3,6 @@ use aws_sdk_s3::operation::put_object::PutObjectOutput;
 use aws_sdk_s3::primitives::ByteStream;
 use chrono::Utc;
 use clap::Parser;
-use std::io::Bytes;
 
 use crate::qrp::QrpFormat;
 
@@ -32,7 +31,7 @@ impl S3Client {
 
     pub async fn upload(
         &self,
-        data: &Vec<u8>,
+        data: &[u8],
         vat_number: &String,
         user: &String,
         format: QrpFormat,
@@ -47,7 +46,7 @@ impl S3Client {
             .put_object()
             .bucket(&self.aws_conf.qrp_bucket_name)
             .key(file)
-            .set_body(Option::from(ByteStream::from(data.clone())))
+            .set_body(Option::from(ByteStream::from(data.to_owned())))
             .send()
             .await?)
     }

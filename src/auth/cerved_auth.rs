@@ -14,7 +14,7 @@ impl CervedOAuthClient {
             cerved_base_url: base_url.clone(),
             cerved_oauth_config: cerved_oauth_config.clone(),
             token: Arc::new(RwLock::new(
-                request_new_token(client, &base_url, &cerved_oauth_config)
+                request_new_token(client, base_url, cerved_oauth_config)
                     .await
                     .expect("Unable to obtain Cerved OAuth token"),
             )),
