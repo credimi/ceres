@@ -66,9 +66,9 @@ pub async fn call_cerved_qrp(
 
     let qrp_req = QrpRequest::builder()
         .reference(reference)
-        .product_id(QrpProduct::QRP)
-        .format(QrpFormat::XML)
-        .subject_type(SubjectType::COMPANY)
+        .product_id(QrpProduct::Qrp)
+        .format(QrpFormat::Xml)
+        .subject_type(SubjectType::Company)
         .vat_number(Some(vat_number.clone()))
         .tax_code(None)
         .build();
@@ -83,7 +83,7 @@ pub async fn call_cerved_qrp(
                 log,
                 "Requesting QRP PDF for user {} with requestId: {:?}", user, res.request_id
             );
-            let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, &QrpFormat::PDF).await;
+            let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, &QrpFormat::Pdf).await;
             match result_pdf {
                 Ok(pdf) => {
                     // TODO: save PDF on S3

@@ -35,8 +35,8 @@ impl CervedQrpClient {
             .await?;
 
         match qrp_response.delivery_status {
-            DeliveryStatus::OK => Ok(qrp_response),
-            DeliveryStatus::DEFERRED => {
+            DeliveryStatus::Ok => Ok(qrp_response),
+            DeliveryStatus::Deferred => {
                 let token = _token;
                 let request_id = qrp_response.request_id;
                 let format = qrp_response.format;
@@ -74,8 +74,8 @@ impl CervedQrpClient {
             .await?;
 
         match res.delivery_status {
-            DeliveryStatus::OK => Ok(res),
-            DeliveryStatus::DEFERRED => Err(anyhow!("deferred")),
+            DeliveryStatus::Ok => Ok(res),
+            DeliveryStatus::Deferred => Err(anyhow!("deferred")),
         }
     }
 }

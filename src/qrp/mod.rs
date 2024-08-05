@@ -6,9 +6,10 @@ use uuid::Uuid;
 pub mod cerved_qrp;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum QrpFormat {
-    PDF,
-    XML,
+    Pdf,
+    Xml,
 }
 
 impl Display for QrpFormat {
@@ -17,9 +18,10 @@ impl Display for QrpFormat {
     }
 }
 
-#[derive(Debug)]
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum QrpProduct {
-    QRP,
+    Qrp,
 }
 
 impl Serialize for QrpProduct {
@@ -34,16 +36,17 @@ impl Serialize for QrpProduct {
 impl QrpProduct {
     fn value(&self) -> String {
         match &self {
-            QrpProduct::QRP => "62001".to_owned(),
+            QrpProduct::Qrp => "62001".to_owned(),
         }
     }
 }
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SubjectType {
-    COMPANY,
-    COMPANY_AND_NOREA,
-    PERSON,
+    Company,
+    CompanyAndNorea,
+    Person,
 }
 
 #[derive(Serialize, Debug, TypedBuilder)]
@@ -57,9 +60,10 @@ pub struct QrpRequest {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 enum DeliveryStatus {
-    OK,
-    DEFERRED,
+    Ok,
+    Deferred,
 }
 
 #[derive(Serialize, Deserialize)]
