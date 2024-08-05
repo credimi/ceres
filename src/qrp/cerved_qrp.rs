@@ -16,7 +16,7 @@ impl CervedQrpClient {
         CervedQrpClient {
             http_client: http_client.clone(),
             cerved_base_url: base_url.clone(),
-            cerved_oauth_client: CervedOAuthClient::new(&http_client, &base_url, cerved_oauth_config).await,
+            cerved_oauth_client: CervedOAuthClient::new(&http_client, &base_url, &cerved_oauth_config).await,
         }
     }
 

@@ -62,7 +62,7 @@ pub async fn call_cerved_qrp(
     let user = query.user.clone();
     let _ = query.maxTtl;
 
-    let reference = Uuid::new_v4();
+    let reference = Uuid::now_v7();
 
     let qrp_req = QrpRequest::builder()
         .reference(reference)
