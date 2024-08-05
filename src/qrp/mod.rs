@@ -59,14 +59,14 @@ pub struct QrpRequest {
     tax_code: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 enum DeliveryStatus {
     Ok,
     Deferred,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct QrpResponse {
     pub content: Option<String>,
     delivery_status: DeliveryStatus,

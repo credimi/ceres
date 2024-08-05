@@ -2,6 +2,7 @@ use std::io::Result as IoResult;
 
 use actix_web::web::Data;
 use actix_web::{get, App, HttpResponse, HttpServer};
+use ceres::aws::aws_s3::{AwsConf, S3Client};
 use ceres::qrp::cerved_qrp::CervedQrpClient;
 use ceres::routes::*;
 use ceres::utils::logging::*;
@@ -21,11 +22,21 @@ async fn main() -> IoResult<()> {
     let http_client = reqwest::Client::new();
     let cerved_qrp_client =
         CervedQrpClient::new(http_client, &http_client_config.cerved_base_url, &cerved_oauth_config).await;
+
+    let aws_conf = AwsConf {
+        aws_endpoint: cli.aws_conf.aws_endpoint,
+        qrp_bucket_name: cli.aws_conf.qrp_bucket_name,
+    };
+    let s3_client = S3Client::from_env(aws_conf)
+        .await
+        .expect("Failed to create AWS S3 configuration");
+
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(AppConfig {
                 log: log.clone(),
                 cerved_qrp_client: cerved_qrp_client.clone(),
+                aws_s3_client: s3_client.clone(),
             }))
             .service(healthz)
             .service(call_cerved_qrp)

@@ -1,15 +1,19 @@
 use std::io::Result as IoResult;
 
 use crate::auth::CervedOAuthConfig;
+use crate::aws::aws_s3::{AwsConf, S3Client};
 use crate::qrp::cerved_qrp::CervedQrpClient;
 use crate::qrp::{QrpFormat, QrpProduct, QrpRequest, SubjectType};
 use crate::utils::logging::Logger;
 use actix_web::web::{Data, Path, Query};
 use actix_web::{post, HttpResponse};
+use base64::Engine;
+use chrono::format::Fixed::TimezoneName;
+use chrono::{DateTime, Utc};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use slog::info;
+use slog::{error, info};
 use uuid::Uuid;
 
 #[derive(Debug, Parser)]
@@ -18,6 +22,8 @@ pub struct Cli {
     pub http_client_config: HttpClientConfig,
     #[command(flatten)]
     pub cerved_oauth_config: CervedOAuthConfig,
+    #[command(flatten)]
+    pub aws_conf: AwsConf,
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -29,6 +35,7 @@ pub struct HttpClientConfig {
 pub struct AppConfig {
     pub log: Logger,
     pub cerved_qrp_client: CervedQrpClient,
+    pub aws_s3_client: S3Client,
 }
 
 #[derive(Serialize)]
@@ -60,6 +67,8 @@ pub async fn call_cerved_qrp(
 
     let vat_number = path.into_inner();
     let user = query.user.clone();
+
+    // TODO: still used?
     let _ = query.maxTtl;
 
     let reference = Uuid::now_v7();
@@ -78,16 +87,61 @@ pub async fn call_cerved_qrp(
 
     match result {
         Ok(res) => {
-            // TODO: save XML on S3
+            let _res = res.clone();
+            let data = base64::engine::general_purpose::STANDARD
+                .decode(
+                    res.content
+                        .expect(format!("No content found in response: {:?}", _res).as_str()),
+                )
+                .expect("Invalid base64");
+
+            info!(
+                log,
+                "Uploading to S3: QRP XML for vat {} by user {} with requestId: {:?}", vat_number, user, res.request_id
+            );
+            let s3_client = &app_data.aws_s3_client;
+            let upload_res = s3_client.upload(&data, &vat_number, &user, QrpFormat::Xml).await;
+            match upload_res {
+                Ok(_) => {
+                    info!(log, "Uploaded QRP XML for vat {}", vat_number)
+                }
+                Err(_) => {
+                    error!(log, "Failed upload QRP XML for vat {}", vat_number)
+                }
+            }
+
             info!(
                 log,
                 "Requesting QRP PDF for user {} with requestId: {:?}", user, res.request_id
             );
             let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, &QrpFormat::Pdf).await;
+
             match result_pdf {
                 Ok(pdf) => {
-                    // TODO: save PDF on S3
-                    Ok(HttpResponse::Ok().json(pdf))
+                    let _pdf = pdf.clone();
+                    let data = base64::engine::general_purpose::STANDARD
+                        .decode(
+                            pdf.content
+                                .expect(format!("No content found in response: {:?}", _pdf).as_str()),
+                        )
+                        .expect("Invalid base64");
+
+                    info!(
+                        log,
+                        "Uploading to S3: QRP PDF for user {} with requestId: {:?}", user, res.request_id
+                    );
+                    let upload_res = s3_client.upload(&data, &vat_number, &user, QrpFormat::Xml).await;
+
+                    match upload_res {
+                        Ok(_) => {
+                            info!(log, "Uploaded QRP PDF for vat {}", vat_number)
+                        }
+                        Err(_) => {
+                            error!(log, "Failed upload QRP PDF for vat {}", vat_number)
+                        }
+                    }
+
+                    Ok(HttpResponse::Ok().finish())
                 }
                 Err(_) => Ok(HttpResponse::BadGateway()
                     .json(json!({ "message": "unable to retrieve PDF", "reference":  reference }))),

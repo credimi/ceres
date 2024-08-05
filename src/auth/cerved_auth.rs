@@ -16,13 +16,13 @@ impl CervedOAuthClient {
             token: Arc::new(RwLock::new(
                 request_new_token(client, &base_url, &cerved_oauth_config)
                     .await
-                    .expect("Cannot get Cerved OAuth token"),
+                    .expect("Unable to obtain Cerved OAuth token"),
             )),
         }
     }
 
     pub fn get_access_token(&self) -> String {
-        let token = self.token.read().expect("Cannot acquire token in read");
+        let token = self.token.read().expect("Cannot acquire read lock on token");
         // TODO: check if token is expired and refresh
         token.access_token.clone()
     }
