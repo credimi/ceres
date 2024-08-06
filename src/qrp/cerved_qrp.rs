@@ -14,10 +14,10 @@ pub struct CervedQrpClient {
 }
 
 impl CervedQrpClient {
-    pub async fn new(http_client: reqwest::Client, base_url: &String, cerved_oauth_config: &CervedOAuthConfig) -> Self {
+    pub async fn new(http_client: reqwest::Client, base_url: &str, cerved_oauth_config: &CervedOAuthConfig) -> Self {
         CervedQrpClient {
             http_client: http_client.clone(),
-            cerved_api_base_url: base_url.clone(),
+            cerved_api_base_url: base_url.to_owned(),
             cerved_oauth_client: CervedOAuthClient::new(&http_client, cerved_oauth_config).await,
             log: get_root_logger(),
         }

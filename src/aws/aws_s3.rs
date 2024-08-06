@@ -56,9 +56,8 @@ impl S3Client {
             .set_body(Option::from(ByteStream::from(data.to_owned())))
             .send()
             .await?)
-        .and_then(|_res| {
+        .map(|_res| {
             info!(self.log, "Uploaded to S3"; "file" => &file);
-            Ok(())
         })
     }
 }

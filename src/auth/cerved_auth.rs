@@ -1,12 +1,13 @@
 use crate::auth::{CervedAuth, CervedAuthRes, CervedOAuthConfig};
 use crate::utils::logging::get_root_logger;
 use slog::debug;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Clone)]
 pub struct CervedOAuthClient {
     cerved_oauth_config: CervedOAuthConfig,
-    token: Arc<RwLock<CervedAuth>>,
+    token: Arc<Mutex<CervedAuth>>,
     log: slog::Logger,
 }
 
@@ -14,7 +15,7 @@ impl CervedOAuthClient {
     pub async fn new(client: &reqwest::Client, cerved_oauth_config: &CervedOAuthConfig) -> Self {
         CervedOAuthClient {
             cerved_oauth_config: cerved_oauth_config.clone(),
-            token: Arc::new(RwLock::new(
+            token: Arc::new(Mutex::new(
                 request_new_token(client, cerved_oauth_config)
                     .await
                     .expect("Unable to obtain Cerved OAuth token"),
@@ -24,25 +25,22 @@ impl CervedOAuthClient {
     }
 
     pub async fn get_access_token(&self, http_client: &reqwest::Client) -> anyhow::Result<String> {
-        let token_read = self.token.read().expect("Cannot acquire read lock on token");
-        if (token_read.created_at + chrono::Duration::seconds(token_read.expires_in as i64)) < chrono::Utc::now() {
+        let mut token_guard = self.token.lock().await;
+        if (token_guard.created_at + chrono::Duration::seconds(token_guard.expires_in as i64)) < chrono::Utc::now() {
             debug!(self.log, "Refreshing Cerved OAuth token...");
             let new_token = self
                 .refresh_token(
                     http_client,
-                    &token_read.refresh_token,
+                    &token_guard.refresh_token,
                     &self.cerved_oauth_config.cerved_oauth_base_url,
                 )
                 .await?;
-
-            drop(token_read);
-            let mut token_write = self.token.write().expect("Cannot acquire write lock on token");
-            *token_write = new_token.clone();
+            *token_guard = new_token.clone();
 
             debug!(self.log, "Cerved OAuth token refreshed: {}", new_token.access_token);
-            return Ok(new_token.access_token.clone());
+            return Ok(new_token.access_token);
         }
-        Ok(token_read.access_token.clone())
+        Ok(token_guard.access_token.clone())
     }
 
     async fn refresh_token(
@@ -55,7 +53,7 @@ impl CervedOAuthClient {
             "{}/cas/oauth/token?grant_type=refresh_token&client_id=cerved-client&refresh_token={}",
             oauth_base_url, refresh_token
         );
-        Ok(http_client.get(url).send().await?.json::<CervedAuthRes>().await?).and_then(|res| Ok(res.into()))
+        Ok(http_client.get(url).send().await?.json::<CervedAuthRes>().await?).map(|res| res.into())
     }
 }
 
@@ -69,5 +67,5 @@ async fn request_new_token(
         cerved_oauth_config.cerved_oauth_username,
         cerved_oauth_config.cerved_oauth_password
     );
-    Ok(http_client.get(url).send().await?.json::<CervedAuthRes>().await?).and_then(|res| Ok(res.into()))
+    Ok(http_client.get(url).send().await?.json::<CervedAuthRes>().await?).map(|res| res.into())
 }
