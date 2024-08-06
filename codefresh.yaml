@@ -73,16 +73,6 @@ steps:
         all:
           imageExists: "${{IMAGE_EXISTS}} == false"
 
-  build_migrations_image:
-    stage: build
-    type: build
-    dockerfile: Dockerfile
-    target: migrations
-    image_name: ${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}-migrations
-    tag: ${{CF_SHORT_REVISION}}
-    disable_push: true
-    when: *image_not_already_built
-
   build_tests_image:
     stage: build
     type: build
@@ -125,12 +115,6 @@ steps:
     stage: publish
     type: parallel
     steps:
-      publish_migrations_image:
-        type: push
-        candidate: ${{build_migrations_image}}
-        tags:
-          - ${{CF_SHORT_REVISION}}
-          - ${{CF_BRANCH_TAG_NORMALIZED}}
       publish_app_image:
         type: push
         candidate: ${{build_app_image}}
@@ -152,12 +136,6 @@ steps:
     environment:
       - OTHER_SECRETS=${{CF_REPO_NAME}}-secrets
     when: *is_not_release
-
-  run_migrations:
-    stage: deploy
-    image: credimi/codefresh-deploy-job:${{CODEFRESH_DEPLOY_VERSION}}
-    environment:
-      - JOB_YAML_PATH=./k8s/migrations.yaml
 
   deploy_app:
     stage: deploy
