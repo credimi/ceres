@@ -100,14 +100,8 @@ steps:
       version: '3.0'
       services:
         mockoon:
-          image: mockoon/cli:latest
-          ports:
-            - '3001:3001'
-          volumes:
-            - type: bind
-              source: ./tests/mockoon/cerved.json
-              target: /data
-          command: ["--data", "data"]
+          arguments:
+            composition: docker-compose.yml
     composition_candidates:
       run_tests:
         image: ${{build_tests_image}}
@@ -120,8 +114,7 @@ steps:
           QRP_BUCKET_NAME: qrp-bucket-test
         command: sh -c "sleep 5s && cargo test --release --no-fail-fast"
         depends_on:
-          - postgres
-          - migrations
+          - mockoon
     when: *image_not_already_built
 
   publish_images:
