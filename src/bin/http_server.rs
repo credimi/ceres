@@ -20,8 +20,12 @@ async fn main() -> IoResult<()> {
     info!(log, "Start server @ {}", listen_addr; "listen_addr" => ?listen_addr);
 
     let http_client = reqwest::Client::new();
-    let cerved_qrp_client =
-        CervedQrpClient::new(http_client, &http_client_config.cerved_api_base_url, &cerved_oauth_config).await;
+    let cerved_qrp_client = CervedQrpClient::new(
+        http_client,
+        &http_client_config.cerved_api_base_url,
+        &cerved_oauth_config,
+    )
+    .await;
 
     let aws_conf = AwsConf {
         qrp_bucket_name: cli.aws_conf.qrp_bucket_name,

@@ -1,12 +1,10 @@
 use crate::qrp::QrpFormat;
 use crate::utils::logging::get_root_logger;
-use anyhow::anyhow;
 use aws_sdk_s3::config::BehaviorVersion;
 use aws_sdk_s3::primitives::ByteStream;
 use chrono::Utc;
 use clap::Parser;
 use slog::info;
-use std::error::Error;
 
 #[derive(Parser, Debug, Clone)]
 pub struct AwsConf {

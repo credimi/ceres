@@ -17,7 +17,7 @@
       "responses": [
         {
           "uuid": "a9a76398-824c-4061-bbf9-7b4696c0d673",
-          "body": "{\n  \"access_token\": \"O*zB6QFtoX8WJeFFA6MH6kR5X477a8E4g7E9qaRaVDmmDksvhM5x-UzAuEtuBumeu0W9Y2-r*VbHI-QOP6Mf5hDo4QVCKNJvYeHIGeZsq70_\",\n  \"token_type\": \"bearer\",\n  \"refresh_token\": \"O*zB6QFtoX8WJeFFA6MH6lPv5Ee1axV74plQEOWZDaWww5dW1z*4LpljI8W4eMnoRYQ0M1bOhD*gnExXvXqwkvBJYDaKIAEmZDLAKdQRcUE_\",\n  \"expires_in\": 37555,\n  \"scope\": \"users\"\n}",
+          "body": "{\n  \"access_token\": \"O*zB6QFtoX8WJeFFA6MH6kR5X477a8E4g7E9qaRaVDmmDksvhM5x-UzAuEtuBumeu0W9Y2-r*VbHI-QOP6Mf5hDo4QVCKNJvYeHIGeZsq70_\",\n  \"token_type\": \"bearer\",\n  \"refresh_token\": \"O*zB6QFtoX8WJeFFA6MH6lPv5Ee1axV74plQEOWZDaWww5dW1z*4LpljI8W4eMnoRYQ0M1bOhD*gnExXvXqwkvBJYDaKIAEmZDLAKdQRcUE_\",\n  \"expires_in\": 3,\n  \"scope\": \"users\"\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -26,11 +26,46 @@
           "filePath": "",
           "databucketID": "",
           "sendFileAsBody": false,
-          "rules": [],
+          "rules": [
+            {
+              "target": "query",
+              "modifier": "grant_type",
+              "value": "password",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
           "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "19a06159-e506-4581-b911-5a6953378819",
+          "body": "{\n  \"access_token\": \"O*zB6QFtoX8WJeFFA6MH6kR5X477a8E4g7E9qaRaVDmmDksvhM5x-UzAuEtuBumeu0W9Y2-r*VbHI-QOP6Mf5hDo4QVCKNJvYeHIGeZmq55_\",\n  \"token_type\": \"bearer\",\n  \"refresh_token\": \"O*zB6QFtoX8WJeFFA6MH6lPv5Ee1axV74plQEOWZDaWww5dW1z*4LpljI8W4eMnoRYQ0M1bOhD*gnExXvXqwkvBJYDaKIAEmZDLAKdQHcYT_\",\n  \"expires_in\": 30,\n  \"scope\": \"users\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "refresh_token",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "query",
+              "modifier": "grant_type",
+              "value": "refresh_token",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
           "crudKey": "id",
           "callbacks": []
         }
