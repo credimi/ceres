@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  mockoon:
+    image: mockoon/cli:latest
+    ports:
+      - '3001:3001'
+    volumes:
+      - type: bind
+        source: ./tests/mockoon/cerved.json
+        target: /data
+    command: ["--data", "data"]

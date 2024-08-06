@@ -66,7 +66,7 @@ pub async fn call_cerved_qrp(
     let vat_number = path.into_inner();
     let user = query.user.clone();
 
-    // TODO: still used?
+    // TODO: should be still used?
     let _ = query.maxTtl;
 
     let reference = Uuid::now_v7();
@@ -104,6 +104,7 @@ pub async fn call_cerved_qrp(
                     info!(log, "Uploaded QRP XML for vat {}", vat_number)
                 }
                 Err(_) => {
+                    // TODO: should we return an error here?
                     error!(log, "Failed upload QRP XML for vat {}", vat_number)
                 }
             }
@@ -135,11 +136,12 @@ pub async fn call_cerved_qrp(
                             info!(log, "Uploaded QRP PDF for vat {}", vat_number)
                         }
                         Err(_) => {
+                            // TODO: should we return an error here?
                             error!(log, "Failed upload QRP PDF for vat {}", vat_number)
                         }
                     }
 
-                    Ok(HttpResponse::Ok().finish())
+                    Ok(HttpResponse::Created().finish())
                 }
                 Err(_) => Ok(HttpResponse::BadGateway()
                     .json(json!({ "message": "unable to retrieve PDF", "reference":  reference }))),

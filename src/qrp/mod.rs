@@ -64,7 +64,9 @@ pub struct QrpRequest {
     product_id: QrpProduct,
     reference: Uuid,
     subject_type: SubjectType,
+    #[serde(skip_serializing_if = "Option::is_none")]
     vat_number: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     tax_code: Option<String>,
 }
 
@@ -81,4 +83,42 @@ pub struct QrpResponse {
     delivery_status: DeliveryStatus,
     format: QrpFormat,
     pub request_id: u32,
+}
+
+#[cfg(test)]
+mod tests {
+    use uuid::uuid;
+    use super::*;
+
+    #[test]
+    fn test_qrp_format() {
+        let pdf = QrpFormat::Pdf;
+        assert_eq!(pdf.value(), "pdf");
+
+        let xml = QrpFormat::Xml;
+        assert_eq!(xml.value(), "xml");
+    }
+
+    #[test]
+    fn test_qrp_product() {
+        let qrp = QrpProduct::Qrp;
+        assert_eq!(qrp.value(), "62001");
+    }
+
+    #[test]
+    fn test_qrp_request() {
+        let request = QrpRequest::builder()
+            .format(QrpFormat::Pdf)
+            .product_id(QrpProduct::Qrp)
+            .reference(uuid!("01912698-474d-7a13-b5b8-103bd86b7a44"))
+            .subject_type(SubjectType::CompanyAndNorea)
+            .vat_number(Some("12345678901".to_owned()))
+            .tax_code(None)
+            .build();
+
+        let expected_json = r#"{"format":"PDF","product_id":"62001","reference":"01912698-474d-7a13-b5b8-103bd86b7a44","subject_type":"COMPANY_AND_NOREA","vat_number":"12345678901"}"#;
+        let actual_json = serde_json::to_string(&request).unwrap();
+
+        assert_eq!(expected_json, actual_json);
+    }
 }

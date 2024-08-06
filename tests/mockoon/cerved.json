@@ -1,0 +1,318 @@
+{
+  "uuid": "87cdbdd4-ff84-45ad-a735-f2a2a9a931d6",
+  "lastMigration": 32,
+  "name": "Cerved",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 3001,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "9b996037-ef30-4a9f-a1ab-5e19a2dc9f0b",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "cas/oauth/token",
+      "responses": [
+        {
+          "uuid": "a9a76398-824c-4061-bbf9-7b4696c0d673",
+          "body": "{\n  \"access_token\": \"O*zB6QFtoX8WJeFFA6MH6kR5X477a8E4g7E9qaRaVDmmDksvhM5x-UzAuEtuBumeu0W9Y2-r*VbHI-QOP6Mf5hDo4QVCKNJvYeHIGeZsq70_\",\n  \"token_type\": \"bearer\",\n  \"refresh_token\": \"O*zB6QFtoX8WJeFFA6MH6lPv5Ee1axV74plQEOWZDaWww5dW1z*4LpljI8W4eMnoRYQ0M1bOhD*gnExXvXqwkvBJYDaKIAEmZDLAKdQRcUE_\",\n  \"expires_in\": 37555,\n  \"scope\": \"users\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "1aca5803-c946-4bd5-9dcc-f8a97980896b",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "cervedApiB2B/v1/purchase",
+      "responses": [
+        {
+          "uuid": "649641b8-f0a3-4abe-af39-21ec00567100",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"OK\",\n  \"content\": \"PHJvb3Q+DQogIDxwZXJzb24+DQogICAgPG5hbWU+Sm9obiBEb2U8L25hbWU+DQogICAgPGFnZT4zMDwvYWdlPg0KICAgIDxlbWFpbD5qb2huLmRvZUBleGFtcGxlLmNvbTwvZW1haWw+DQogIDwvcGVyc29uPg0KICA8cGVyc29uPg0KICAgIDxuYW1lPkphbmUgU21pdGg8L25hbWU+DQogICAgPGFnZT4yNTwvYWdlPg0KICAgIDxlbWFpbD5qYW5lLnNtaXRoQGV4YW1wbGUuY29tPC9lbWFpbD4NCiAgPC9wZXJzb24+DQogIDxib29rPg0KICAgIDx0aXRsZT5UaGUgQWR2ZW50dXJlIEJlZ2luczwvdGl0bGU+DQogICAgPGF1dGhvcj5Sb2JlcnQgSm9obnNvbjwvYXV0aG9yPg0KICAgIDx5ZWFyPjIwMjI8L3llYXI+DQogIDwvYm9vaz4NCjwvcm9vdD4NCg==\",\n  \"format\": \"XML\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "format",
+              "value": "XML",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "e4885947-2776-4a4e-8ed6-43a6aa6d306e",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"DEFERRED\",\n  \"detailed_delivery_status\": \"EROGAZIONE REALTIME NON RICHIESTA\",\n  \"format\": \"XML\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "DEFERRED XML",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "format",
+              "value": "XML",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "c0082bf8-18b3-4f21-9124-0fda932a873c",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"DEFERRED\",\n  \"detailed_delivery_status\": \"EROGAZIONE REALTIME NON RICHIESTA\",\n  \"format\": \"PDF\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "DEFERRED PDF",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "format",
+              "value": "PDF",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "45547467-2509-4067-b75a-02868ab341cc",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"OK\",\n  \"content\": \"PHJvb3Q+DQogIDxwZXJzb24+DQogICAgPG5hbWU+Sm9obiBEb2U8L25hbWU+DQogICAgPGFnZT4zMDwvYWdlPg0KICAgIDxlbWFpbD5qb2huLmRvZUBleGFtcGxlLmNvbTwvZW1haWw+DQogIDwvcGVyc29uPg0KICA8cGVyc29uPg0KICAgIDxuYW1lPkphbmUgU21pdGg8L25hbWU+DQogICAgPGFnZT4yNTwvYWdlPg0KICAgIDxlbWFpbD5qYW5lLnNtaXRoQGV4YW1wbGUuY29tPC9lbWFpbD4NCiAgPC9wZXJzb24+DQogIDxib29rPg0KICAgIDx0aXRsZT5UaGUgQWR2ZW50dXJlIEJlZ2luczwvdGl0bGU+DQogICAgPGF1dGhvcj5Sb2JlcnQgSm9obnNvbjwvYXV0aG9yPg0KICAgIDx5ZWFyPjIwMjI8L3llYXI+DQogIDwvYm9vaz4NCjwvcm9vdD4NCg==\",\n  \"format\": \"PDF\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "PDF",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "format",
+              "value": "PDF",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "507d1365-90e3-4997-a92f-2f6d9e3c8394",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "cervedApiB2B/v1/purchase/request/3707621235/format/XML",
+      "responses": [
+        {
+          "uuid": "503ec05e-f376-457f-9533-280ebc8541c0",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"OK\",\n  \"content\": \"PHJvb3Q+DQogIDxwZXJzb24+DQogICAgPG5hbWU+Sm9obiBEb2U8L25hbWU+DQogICAgPGFnZT4zMDwvYWdlPg0KICAgIDxlbWFpbD5qb2huLmRvZUBleGFtcGxlLmNvbTwvZW1haWw+DQogIDwvcGVyc29uPg0KICA8cGVyc29uPg0KICAgIDxuYW1lPkphbmUgU21pdGg8L25hbWU+DQogICAgPGFnZT4yNTwvYWdlPg0KICAgIDxlbWFpbD5qYW5lLnNtaXRoQGV4YW1wbGUuY29tPC9lbWFpbD4NCiAgPC9wZXJzb24+DQogIDxib29rPg0KICAgIDx0aXRsZT5UaGUgQWR2ZW50dXJlIEJlZ2luczwvdGl0bGU+DQogICAgPGF1dGhvcj5Sb2JlcnQgSm9obnNvbjwvYXV0aG9yPg0KICAgIDx5ZWFyPjIwMjI8L3llYXI+DQogIDwvYm9vaz4NCjwvcm9vdD4NCg==\",\n  \"format\": \"XML\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "e09beaef-f19f-4c22-8812-dc7eab5c676c",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"DEFERRED\",\n  \"detailed_delivery_status\": \"EROGAZIONE REALTIME NON RICHIESTA\",\n  \"format\": \"XML\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "DEFERRED",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": "RANDOM"
+    },
+    {
+      "uuid": "a4b3aa89-2091-4044-97a3-d36935b33f03",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "cervedApiB2B/v1/purchase/request/3707621235/format/PDF",
+      "responses": [
+        {
+          "uuid": "112f18ef-ae1b-4b7b-8b8a-dc6d8836b6b5",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"OK\",\n  \"content\": \"PHJvb3Q+DQogIDxwZXJzb24+DQogICAgPG5hbWU+Sm9obiBEb2U8L25hbWU+DQogICAgPGFnZT4zMDwvYWdlPg0KICAgIDxlbWFpbD5qb2huLmRvZUBleGFtcGxlLmNvbTwvZW1haWw+DQogIDwvcGVyc29uPg0KICA8cGVyc29uPg0KICAgIDxuYW1lPkphbmUgU21pdGg8L25hbWU+DQogICAgPGFnZT4yNTwvYWdlPg0KICAgIDxlbWFpbD5qYW5lLnNtaXRoQGV4YW1wbGUuY29tPC9lbWFpbD4NCiAgPC9wZXJzb24+DQogIDxib29rPg0KICAgIDx0aXRsZT5UaGUgQWR2ZW50dXJlIEJlZ2luczwvdGl0bGU+DQogICAgPGF1dGhvcj5Sb2JlcnQgSm9obnNvbjwvYXV0aG9yPg0KICAgIDx5ZWFyPjIwMjI8L3llYXI+DQogIDwvYm9vaz4NCjwvcm9vdD4NCg==\",\n  \"format\": \"PDF\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "7cca1f23-2757-4dd3-85a3-155e191ff11c",
+          "body": "{\n  \"request_id\": 3707621235,\n  \"delivery_status\": \"DEFERRED\",\n  \"detailed_delivery_status\": \"EROGAZIONE REALTIME NON RICHIESTA\",\n  \"format\": \"PDF\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "DEFERRED",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": "RANDOM"
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "9b996037-ef30-4a9f-a1ab-5e19a2dc9f0b"
+    },
+    {
+      "type": "route",
+      "uuid": "1aca5803-c946-4bd5-9dcc-f8a97980896b"
+    },
+    {
+      "type": "route",
+      "uuid": "507d1365-90e3-4997-a92f-2f6d9e3c8394"
+    },
+    {
+      "type": "route",
+      "uuid": "a4b3aa89-2091-4044-97a3-d36935b33f03"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}
