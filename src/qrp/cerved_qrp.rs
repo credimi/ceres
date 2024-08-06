@@ -7,7 +7,7 @@ use backon::{ExponentialBuilder, Retryable};
 #[derive(Clone)]
 pub struct CervedQrpClient {
     http_client: reqwest::Client,
-    cerved_base_url: String,
+    cerved_api_base_url: String,
     cerved_oauth_client: CervedOAuthClient,
 }
 
@@ -15,8 +15,8 @@ impl CervedQrpClient {
     pub async fn new(http_client: reqwest::Client, base_url: &String, cerved_oauth_config: &CervedOAuthConfig) -> Self {
         CervedQrpClient {
             http_client: http_client.clone(),
-            cerved_base_url: base_url.clone(),
-            cerved_oauth_client: CervedOAuthClient::new(&http_client, base_url, cerved_oauth_config).await,
+            cerved_api_base_url: base_url.clone(),
+            cerved_oauth_client: CervedOAuthClient::new(&http_client, cerved_oauth_config).await,
         }
     }
 
@@ -26,7 +26,7 @@ impl CervedQrpClient {
         let token = _token.clone();
         let qrp_response = self
             .http_client
-            .post(format!("{}/cervedApiB2B/v1/purchase", self.cerved_base_url))
+            .post(format!("{}/cervedApiB2B/v1/purchase", self.cerved_api_base_url))
             .bearer_auth(token)
             .json(qrp_request)
             .send()
@@ -65,7 +65,7 @@ impl CervedQrpClient {
             .http_client
             .get(format!(
                 "{}/cervedApiB2B/v1/purchase/request/{}/format/{}",
-                self.cerved_base_url, request_id, format
+                self.cerved_api_base_url, request_id, format
             ))
             .bearer_auth(token)
             .send()

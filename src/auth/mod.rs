@@ -15,7 +15,9 @@ struct CervedAuthRes {
 #[derive(Parser, Debug, Clone)]
 pub struct CervedOAuthConfig {
     #[arg(long, env)]
-    pub username: String,
+    pub cerved_oauth_base_url: String,
     #[arg(long, env)]
-    pub password: String,
+    pub cerved_oauth_username: String,
+    #[arg(long, env)]
+    pub cerved_oauth_password: String,
 }

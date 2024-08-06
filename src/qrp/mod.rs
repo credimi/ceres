@@ -87,8 +87,8 @@ pub struct QrpResponse {
 
 #[cfg(test)]
 mod tests {
-    use uuid::uuid;
     use super::*;
+    use uuid::uuid;
 
     #[test]
     fn test_qrp_format() {

@@ -27,7 +27,7 @@ pub struct Cli {
 #[derive(Parser, Debug, Clone)]
 pub struct HttpClientConfig {
     #[arg(long, env)]
-    pub cerved_base_url: String,
+    pub cerved_api_base_url: String,
 }
 
 pub struct AppConfig {

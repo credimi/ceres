@@ -3,18 +3,16 @@ use std::sync::{Arc, RwLock};
 
 #[derive(Clone)]
 pub struct CervedOAuthClient {
-    cerved_base_url: String,
     cerved_oauth_config: CervedOAuthConfig,
     token: Arc<RwLock<CervedAuthRes>>,
 }
 
 impl CervedOAuthClient {
-    pub async fn new(client: &reqwest::Client, base_url: &String, cerved_oauth_config: &CervedOAuthConfig) -> Self {
+    pub async fn new(client: &reqwest::Client, cerved_oauth_config: &CervedOAuthConfig) -> Self {
         CervedOAuthClient {
-            cerved_base_url: base_url.clone(),
             cerved_oauth_config: cerved_oauth_config.clone(),
             token: Arc::new(RwLock::new(
-                request_new_token(client, base_url, cerved_oauth_config)
+                request_new_token(client, cerved_oauth_config)
                     .await
                     .expect("Unable to obtain Cerved OAuth token"),
             )),
@@ -30,12 +28,11 @@ impl CervedOAuthClient {
 
 async fn request_new_token(
     http_client: &reqwest::Client,
-    cerved_base_url: &String,
     cerved_oauth_config: &CervedOAuthConfig,
 ) -> anyhow::Result<CervedAuthRes> {
     let url = format!(
         "{}/cas/oauth/token?grant_type=password&client_id=cerved-client&username={}&password={}",
-        cerved_base_url, cerved_oauth_config.username, cerved_oauth_config.password
+        cerved_oauth_config.cerved_oauth_base_url, cerved_oauth_config.cerved_oauth_username, cerved_oauth_config.cerved_oauth_password
     );
     Ok(http_client.get(url).send().await?.json::<CervedAuthRes>().await?)
 }

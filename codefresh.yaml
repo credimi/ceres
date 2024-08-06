@@ -21,10 +21,9 @@ steps:
     commands:
       - cf_export INGRESS_CLASS="internal-ingress"
       - cf_export OWNER_TEAM="internal"
-      - cf_export DB_PORT="5432"
-      - cf_export DB_ADMIN_USER="rdsdbadmin"
-      - cf_export DB_USER=${{CF_REPO_NAME}} # note: this is the prefix of both the RW and RO users that will be created
       - cf_export HTTP_SERVER_LISTEN_ADDR="0.0.0.0:8080"
+      - cf_export CERVED_OAUTH_BASE_URL="https://cas.cerved.com"
+      - cf_export CERVED_API_BASE_URL="https://api.cerved.com"
 
   set_production_vars:
     stage: init
@@ -34,8 +33,6 @@ steps:
       - cf_export EKS_ACM_ARN=${{PROD_EKS_ACM_ARN}}
       - cf_export NAMESPACE="prod"
       - cf_export HOST="{{CF_REPO_NAME}}.private.bancacfplus.it"
-      - cf_export DB_HOST="prod-postgres-0.cy8ip29re6ph.eu-west-1.rds.amazonaws.com"
-      - cf_export DB_NAME="ceres"
     when:
       branch:
         only:
@@ -49,8 +46,6 @@ steps:
       - cf_export EKS_ACM_ARN=${{QA_EKS_ACM_ARN}}
       - cf_export NAMESPACE="${{CF_BRANCH_TAG_NORMALIZED}}"
       - cf_export HOST="${{CF_BRANCH_TAG_NORMALIZED}}-{{CF_REPO_NAME}}.qa.private.bancacfplus.it"
-      - cf_export DB_HOST="qa-postgres-0.c1ohp1tvlyxc.eu-west-1.rds.amazonaws.com"
-      - cf_export DB_NAME="${{CF_BRANCH_TAG_NORMALIZED}}-ceres"
     when: &is_not_release
       branch:
         ignore:
@@ -104,30 +99,25 @@ steps:
     composition:
       version: '3.0'
       services:
-        postgres:
-          image: postgres:12.16
+        mockoon:
+          image: mockoon/cli:latest
           ports:
-            - 5432
-          environment:
-            POSTGRES_DB: db
-            POSTGRES_USER: user
-            POSTGRES_PASSWORD: password
-        migrations:
-          image: ${{build_migrations_image}}
-          environment:
-            DATABASE_URL: postgres://user:password@postgres:5432/db
-          command: -c "sleep 5s && dockerize -wait tcp://postgres:5432 -timeout 60s && diesel setup && diesel migration run"
-          depends_on:
-            - postgres
+            - '3001:3001'
+          volumes:
+            - type: bind
+              source: ./tests/mockoon/cerved.json
+              target: /data
+          command: ["--data", "data"]
     composition_candidates:
       run_tests:
         image: ${{build_tests_image}}
         environment:
-          DB_USER: user
-          DB_PASS: password
-          DB_PORT: 5432
-          DB_HOST: postgres
-          DB_NAME: db
+          S3_DRY_RUN: true
+          CERVED_API_BASE_URL: http://mockoon:3001
+          CERVED_OAUTH_BASE_URL: http://mockoon:3001
+          CERVED_OAUTH_USERNAME: username
+          CERVED_OAUTH_PASSWORD: PASSWORD
+          QRP_BUCKET_NAME: qrp-bucket-test
         command: sh -c "sleep 5s && cargo test --release --no-fail-fast"
         depends_on:
           - postgres

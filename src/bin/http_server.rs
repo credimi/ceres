@@ -21,11 +21,11 @@ async fn main() -> IoResult<()> {
 
     let http_client = reqwest::Client::new();
     let cerved_qrp_client =
-        CervedQrpClient::new(http_client, &http_client_config.cerved_base_url, &cerved_oauth_config).await;
+        CervedQrpClient::new(http_client, &http_client_config.cerved_api_base_url, &cerved_oauth_config).await;
 
     let aws_conf = AwsConf {
-        aws_endpoint: cli.aws_conf.aws_endpoint,
         qrp_bucket_name: cli.aws_conf.qrp_bucket_name,
+        s3_dry_run: cli.aws_conf.s3_dry_run,
     };
     let s3_client = S3Client::from_env(aws_conf)
         .await
