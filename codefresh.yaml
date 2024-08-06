@@ -20,6 +20,7 @@ steps:
     image: alpine:latest
     commands:
       - cf_export INGRESS_CLASS="internal-ingress"
+      - cf_export OWNER_TEAM="internal"
       - cf_export DB_PORT="5432"
       - cf_export DB_ADMIN_USER="rdsdbadmin"
       - cf_export DB_USER=${{CF_REPO_NAME}} # note: this is the prefix of both the RW and RO users that will be created
@@ -34,7 +35,7 @@ steps:
       - cf_export NAMESPACE="prod"
       - cf_export HOST="{{CF_REPO_NAME}}.private.bancacfplus.it"
       - cf_export DB_HOST="prod-postgres-0.cy8ip29re6ph.eu-west-1.rds.amazonaws.com"
-      - cf_export DB_NAME="rust-microservice"
+      - cf_export DB_NAME="ceres"
     when:
       branch:
         only:
@@ -49,7 +50,7 @@ steps:
       - cf_export NAMESPACE="${{CF_BRANCH_TAG_NORMALIZED}}"
       - cf_export HOST="${{CF_BRANCH_TAG_NORMALIZED}}-{{CF_REPO_NAME}}.qa.private.bancacfplus.it"
       - cf_export DB_HOST="qa-postgres-0.c1ohp1tvlyxc.eu-west-1.rds.amazonaws.com"
-      - cf_export DB_NAME="${{CF_BRANCH_TAG_NORMALIZED}}-rust-microservice"
+      - cf_export DB_NAME="${{CF_BRANCH_TAG_NORMALIZED}}-ceres"
     when: &is_not_release
       branch:
         ignore:

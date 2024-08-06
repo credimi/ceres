@@ -25,33 +25,32 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app: {{CF_REPO_NAME}}
   name: {{CF_REPO_NAME}}
+  labels: &labels
+    app: {{CF_REPO_NAME}}
+    team: {{OWNER_TEAM}}
 spec:
+  selector: *labels
   ports:
     - protocol: TCP
       port: 80
       targetPort: 8080
-  selector:
-    app: {{CF_REPO_NAME}}
   type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    app: {{CF_REPO_NAME}}
   name: {{CF_REPO_NAME}}
+  labels: &labels
+    app: {{CF_REPO_NAME}}
+    team: {{OWNER_TEAM}}
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: {{CF_REPO_NAME}}
+    matchLabels: *labels
   template:
     metadata:
-      labels:
-        app: {{CF_REPO_NAME}}
+      labels: *labels
     spec:
       imagePullSecrets:
         - name: dockerhub-instapartners
@@ -79,6 +78,10 @@ spec:
               value: {{DB_NAME}}
             - name: HTTP_SERVER_LISTEN_ADDR
               value: {{HTTP_SERVER_LISTEN_ADDR}}
+            - name: TOPIC
+              value: ""
+            - name: BROKERS
+              value: ""
           ports:
             - containerPort: 8080
           livenessProbe:

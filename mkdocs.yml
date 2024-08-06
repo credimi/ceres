@@ -1,0 +1,9 @@
+site_name: "ceres"
+docs_dir: "./docs"
+
+nav:
+  - Introduction: index.md
+  - Contributing: CONTRIBUTING.md
+
+plugins:
+  - techdocs-core

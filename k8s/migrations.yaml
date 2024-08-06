@@ -2,15 +2,15 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{CF_REPO_NAME}}-migrations
-  labels:
+  labels: &labels
     app: {{CF_REPO_NAME}}
+    team: internal
 spec:
   completions: 1
   parallelism: 1
   template:
     metadata:
-      labels:
-        app: {{CF_REPO_NAME}}
+      labels: *labels
     spec:
       imagePullSecrets:
         - name: dockerhub-instapartners

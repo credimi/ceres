@@ -1,0 +1,12 @@
+.git
+.idea
+docs
+k8s
+target
+**/.DS_Store
+*.md
+*.yaml
+*.yml
+.dockerignore
+.gitignore
+Dockerfile
