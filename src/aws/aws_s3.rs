@@ -37,8 +37,8 @@ impl S3Client {
         format: QrpFormat,
     ) -> anyhow::Result<PutObjectOutput> {
         let now = Utc::now();
-        let date_time = now.format("%d_%m_%Y_%T");
-        let lower_case_format = format.to_string().to_ascii_lowercase();
+        let date_time = now.format("%d_%m_%Y_%H:%M:%S");
+        let lower_case_format = format.value();
         let file = format!("qrp/{vat_number}/{date_time}_{user}.{lower_case_format}");
 
         Ok(self

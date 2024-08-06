@@ -12,6 +12,15 @@ pub enum QrpFormat {
     Xml,
 }
 
+impl QrpFormat {
+    pub fn value(&self) -> String {
+        match &self {
+            QrpFormat::Pdf => "pdf".to_owned(),
+            QrpFormat::Xml => "xml".to_owned(),
+        }
+    }
+}
+
 impl Display for QrpFormat {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
