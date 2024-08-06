@@ -100,8 +100,12 @@ steps:
       version: '3.0'
       services:
         mockoon:
-          arguments:
-            composition: docker-compose.yml
+          image: mockoon/cli:latest
+          ports:
+            - '3001:3001'
+          volumes:
+            - ${{CF_VOLUME_PATH}}/tests/mockoon/cerved.json:cerved.json
+          command: ["--data", "cerved.json"]
     composition_candidates:
       run_tests:
         image: ${{build_tests_image}}
