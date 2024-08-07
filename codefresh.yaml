@@ -86,15 +86,6 @@ steps:
   run_tests:
     stage: build
     type: composition
-    composition:
-      version: '3.0'
-      services:
-        mockoon:
-          image: mockoon/cli:latest
-          ports:
-            - 3001
-          working_dir: '${{main_clone}}'
-          command: [ "--data", "tests/mockoon/cerved.json" ]
     composition_candidates:
       run_tests:
         image: ${{build_tests_image}}
@@ -106,8 +97,6 @@ steps:
           CERVED_OAUTH_PASSWORD: PASSWORD
           QRP_BUCKET_NAME: qrp-bucket-test
         command: sh -c "sleep 5s && cargo test --release --no-fail-fast"
-        depends_on:
-          - mockoon
     when: *image_not_already_built
 
   publish_images:
