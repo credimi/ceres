@@ -86,7 +86,17 @@ steps:
   run_tests:
     stage: build
     type: composition
-    composition: 'docker-compose.yml'
+    composition:
+      version: '3.0'
+      services:
+        mockoon:
+          image: mockoon/cli:latest
+          ports:
+            - 3001
+          volumes:
+            - '${{CF_VOLUME_NAME}}:${{CF_VOLUME_PATH}}'
+          working_dir: '${{CF_VOLUME_PATH}}'
+          command: [ "--data", "tests/mockoon/cerved.json" ]
     composition_candidates:
       run_tests:
         image: ${{build_tests_image}}
