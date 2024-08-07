@@ -93,9 +93,7 @@ steps:
           image: mockoon/cli:latest
           ports:
             - 3001
-          volumes:
-            - '${{CF_VOLUME_NAME}}:${{CF_VOLUME_PATH}}'
-          working_dir: '${{CF_VOLUME_PATH}}'
+          working_dir: '${{main_clone}}'
           command: [ "--data", "tests/mockoon/cerved.json" ]
     composition_candidates:
       run_tests:
