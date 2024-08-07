@@ -94,9 +94,8 @@ steps:
           ports:
             - 3001
           volumes:
-            - '${{CF_VOLUME_NAME}}:${{CF_VOLUME_PATH}}'
-          working_dir: '${{CF_VOLUME_PATH}}'
-          command: [ "--data", "tests/mockoon/cerved.json" ]
+            - ./tests/mockoon/cerved.json:/data
+          command: [ "--data", "data" ]
     composition_candidates:
       run_tests:
         image: ${{build_tests_image}}
@@ -108,6 +107,8 @@ steps:
           CERVED_OAUTH_PASSWORD: PASSWORD
           QRP_BUCKET_NAME: qrp-bucket-test
         command: sh -c "sleep 5s && cargo test --release --no-fail-fast"
+        depends_on:
+          - mockoon
     when: *image_not_already_built
 
   publish_images:
