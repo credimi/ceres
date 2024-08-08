@@ -1,14 +1,12 @@
 use crate::auth::{CervedAuth, CervedAuthRes, CervedOAuthConfig};
-use crate::utils::logging::get_root_logger;
-use slog::debug;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tracing::debug;
 
 #[derive(Clone)]
 pub struct CervedOAuthClient {
     cerved_oauth_config: CervedOAuthConfig,
     token: Arc<Mutex<CervedAuth>>,
-    log: slog::Logger,
 }
 
 impl CervedOAuthClient {
@@ -20,14 +18,13 @@ impl CervedOAuthClient {
                     .await
                     .expect("Unable to obtain Cerved OAuth token"),
             )),
-            log: get_root_logger(),
         }
     }
 
     pub async fn get_access_token(&self, http_client: &reqwest::Client) -> anyhow::Result<String> {
         let mut token_guard = self.token.lock().await;
         if (token_guard.created_at + chrono::Duration::seconds(token_guard.expires_in as i64)) < chrono::Utc::now() {
-            debug!(self.log, "Refreshing Cerved OAuth token...");
+            debug!("Refreshing Cerved OAuth token...");
             let new_token = self
                 .refresh_token(
                     http_client,
@@ -37,7 +34,7 @@ impl CervedOAuthClient {
                 .await?;
             *token_guard = new_token.clone();
 
-            debug!(self.log, "Cerved OAuth token refreshed: {}", new_token.access_token);
+            debug!("Cerved OAuth token refreshed: {}", new_token.access_token);
             return Ok(new_token.access_token);
         }
         Ok(token_guard.access_token.clone())

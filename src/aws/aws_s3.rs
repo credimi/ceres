@@ -1,10 +1,9 @@
 use crate::qrp::QrpFormat;
-use crate::utils::logging::get_root_logger;
 use aws_sdk_s3::config::BehaviorVersion;
 use aws_sdk_s3::primitives::ByteStream;
 use chrono::Utc;
 use clap::Parser;
-use slog::info;
+use tracing::info;
 
 #[derive(Parser, Debug, Clone)]
 pub struct AwsConf {
@@ -18,7 +17,6 @@ pub struct AwsConf {
 pub struct S3Client {
     aws_conf: AwsConf,
     client: aws_sdk_s3::Client,
-    log: slog::Logger,
 }
 
 impl S3Client {
@@ -27,7 +25,6 @@ impl S3Client {
         Ok(S3Client {
             aws_conf,
             client: aws_sdk_s3::Client::new(&config),
-            log: get_root_logger(),
         })
     }
 
@@ -44,7 +41,7 @@ impl S3Client {
         let file = format!("qrp/{vat_number}/{date_time}_{user}.{lower_case_format}");
 
         if self.aws_conf.s3_dry_run {
-            info!(self.log, "Dry run: not uploading to S3");
+            info!("Dry run: not uploading to S3");
             return Ok(());
         }
 
@@ -57,7 +54,7 @@ impl S3Client {
             .send()
             .await?)
         .map(|_res| {
-            info!(self.log, "Uploaded to S3"; "file" => &file);
+            info!("Uploaded to S3: {}", file);
         })
     }
 }

@@ -1,7 +1,6 @@
 use crate::auth::cerved_auth::CervedOAuthClient;
 use crate::auth::CervedOAuthConfig;
 use crate::qrp::{DeliveryStatus, QrpFormat, QrpRequest, QrpResponse};
-use crate::utils::logging::get_root_logger;
 use anyhow::anyhow;
 use backon::{ExponentialBuilder, Retryable};
 
@@ -10,7 +9,6 @@ pub struct CervedQrpClient {
     http_client: reqwest::Client,
     cerved_api_base_url: String,
     cerved_oauth_client: CervedOAuthClient,
-    log: slog::Logger,
 }
 
 impl CervedQrpClient {
@@ -19,7 +17,6 @@ impl CervedQrpClient {
             http_client: http_client.clone(),
             cerved_api_base_url: base_url.to_owned(),
             cerved_oauth_client: CervedOAuthClient::new(&http_client, cerved_oauth_config).await,
-            log: get_root_logger(),
         }
     }
 

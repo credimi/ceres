@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
-use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 pub mod cerved_qrp;
@@ -30,7 +29,7 @@ impl Display for QrpFormat {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum QrpProduct {
-    Qrp,
+    Qrp = 62001,
 }
 
 impl Serialize for QrpProduct {
@@ -58,16 +57,16 @@ pub enum SubjectType {
     Person,
 }
 
-#[derive(Serialize, Debug, TypedBuilder)]
+#[derive(Serialize, Debug)]
 pub struct QrpRequest {
-    format: QrpFormat,
-    product_id: QrpProduct,
-    reference: Uuid,
-    subject_type: SubjectType,
+    pub(crate) format: QrpFormat,
+    pub(crate) product_id: QrpProduct,
+    pub(crate) reference: Uuid,
+    pub(crate) subject_type: SubjectType,
     #[serde(skip_serializing_if = "Option::is_none")]
-    vat_number: Option<String>,
+    pub(crate) vat_number: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    tax_code: Option<String>,
+    pub(crate) tax_code: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -107,15 +106,14 @@ mod tests {
 
     #[test]
     fn test_qrp_request() {
-        let request = QrpRequest::builder()
-            .format(QrpFormat::Pdf)
-            .product_id(QrpProduct::Qrp)
-            .reference(uuid!("01912698-474d-7a13-b5b8-103bd86b7a44"))
-            .subject_type(SubjectType::CompanyAndNorea)
-            .vat_number(Some("12345678901".to_owned()))
-            .tax_code(None)
-            .build();
-
+        let request = QrpRequest {
+            format: QrpFormat::Pdf,
+            product_id: QrpProduct::Qrp,
+            reference: uuid!("01912698-474d-7a13-b5b8-103bd86b7a44"),
+            subject_type: SubjectType::CompanyAndNorea,
+            vat_number: Some("12345678901".to_owned()),
+            tax_code: None,
+        };
         let expected_json = r#"{"format":"PDF","product_id":"62001","reference":"01912698-474d-7a13-b5b8-103bd86b7a44","subject_type":"COMPANY_AND_NOREA","vat_number":"12345678901"}"#;
         let actual_json = serde_json::to_string(&request).unwrap();
 
