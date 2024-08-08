@@ -1,7 +1,7 @@
 use std::io::Result as IoResult;
 
 use actix_web::web::Data;
-use actix_web::{get, App, HttpResponse, HttpServer};
+use actix_web::{App, HttpServer};
 use ceres::aws::aws_s3::{AwsConf, S3Client};
 use ceres::qrp::cerved_qrp::CervedQrpClient;
 use ceres::routes::*;
@@ -48,9 +48,4 @@ async fn main() -> IoResult<()> {
     .bind(listen_addr)?
     .run()
     .await
-}
-
-#[get("/api/v1/healthz")]
-async fn healthz() -> IoResult<HttpResponse> {
-    Ok(HttpResponse::Ok().content_type("application/json").finish())
 }

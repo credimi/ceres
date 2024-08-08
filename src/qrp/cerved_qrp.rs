@@ -50,9 +50,9 @@ impl CervedQrpClient {
     }
 
     /// Read the QRP with request_id in the specified format. Retries the call when the response is in status "deferred"
-    pub async fn read_qrp_with_retry(&self, request_id: u32, format: &QrpFormat) -> anyhow::Result<QrpResponse> {
+    pub async fn read_qrp_with_retry(&self, request_id: u32, format: QrpFormat) -> anyhow::Result<QrpResponse> {
         let token = self.cerved_oauth_client.get_access_token(&self.http_client).await?;
-        let to_retry = || async { self.read_qrp(&token, request_id, format).await };
+        let to_retry = || async { self.read_qrp(&token, request_id, &format).await };
         to_retry
             .retry(&ExponentialBuilder::default().with_max_times(10))
             .when(|err| err.to_string() == "deferred")

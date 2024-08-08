@@ -64,7 +64,7 @@ enum DeliveryStatus {
 pub struct QrpResponse {
     pub content: Option<String>,
     delivery_status: DeliveryStatus,
-    format: QrpFormat,
+    pub format: QrpFormat,
     pub request_id: u32,
 }
 
@@ -109,7 +109,7 @@ mod tests {
 
         assert_eq!(expected_json, actual_json);
     }
-    
+
     #[test]
     fn test_decode_content() {
         let response = QrpResponse {

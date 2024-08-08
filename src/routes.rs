@@ -3,9 +3,9 @@ use std::io::Result as IoResult;
 use crate::auth::CervedOAuthConfig;
 use crate::aws::aws_s3::{AwsConf, S3Client};
 use crate::qrp::cerved_qrp::CervedQrpClient;
-use crate::qrp::{QrpFormat, QrpProduct, QrpRequest, SubjectType};
+use crate::qrp::{QrpFormat, QrpProduct, QrpRequest, QrpResponse, SubjectType};
 use actix_web::web::{Data, Path, Query};
-use actix_web::{post, HttpResponse};
+use actix_web::{get, post, HttpResponse};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -78,48 +78,17 @@ pub async fn generate_cerved_qrp(
 
     match result {
         Ok(res) => {
-            let data = res.decode_content();
-
-            info!(
-                "Uploading to S3: QRP XML for vat {} by user {} with requestId: {:?}",
-                vat_number, user, res.request_id
-            );
-            let upload_res = s3_client.upload(&data, &vat_number, &user, QrpFormat::Xml).await;
-            match upload_res {
-                Ok(_) => {
-                    info!("Uploaded QRP XML for vat {}", vat_number)
-                }
-                Err(_) => {
-                    // TODO: should we return an error here?
-                    error!("Failed upload QRP XML for vat {}", vat_number)
-                }
-            }
+            content_upload(s3_client, &vat_number, &user, &res).await;
 
             info!(
                 "Requesting QRP PDF for user {} with requestId: {:?}",
                 user, res.request_id
             );
-            let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, &QrpFormat::Pdf).await;
+            let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, QrpFormat::Pdf).await;
 
             match result_pdf {
                 Ok(pdf) => {
-                    let data = pdf.decode_content();
-
-                    info!(
-                        "Uploading to S3: QRP PDF for user {} with requestId: {:?}",
-                        user, res.request_id
-                    );
-                    let upload_res = s3_client.upload(&data, &vat_number, &user, QrpFormat::Xml).await;
-
-                    match upload_res {
-                        Ok(_) => {
-                            info!("Uploaded QRP PDF for vat {}", vat_number)
-                        }
-                        Err(_) => {
-                            // TODO: should we return an error here?
-                            error!("Failed upload QRP PDF for vat {}", vat_number)
-                        }
-                    }
+                    content_upload(s3_client, &vat_number, &user, &pdf).await;
 
                     Ok(HttpResponse::Created().finish())
                 }
@@ -131,4 +100,27 @@ pub async fn generate_cerved_qrp(
             HttpResponse::BadGateway().json(json!({ "message": "unable to retrieve XML", "reference":  reference }))
         ),
     }
+}
+
+async fn content_upload(s3_client: &S3Client, vat_number: &String, user: &String, res: &QrpResponse) {
+    info!(
+        "Uploading to S3: QRP {} for vat {} by user {} with requestId: {:?}",
+        res.format, vat_number, user, res.request_id
+    );
+    let data = res.decode_content();
+    let upload_res = s3_client.upload(&data, vat_number, user, &res.format).await;
+    match upload_res {
+        Ok(_) => {
+            info!("Uploaded QRP {} for vat {}", res.format, vat_number)
+        }
+        Err(_) => {
+            // TODO: should we return an error here?
+            error!("Failed upload QRP {} for vat {}", res.format, vat_number)
+        }
+    }
+}
+
+#[get("/api/v1/healthz")]
+async fn healthz() -> IoResult<HttpResponse> {
+    Ok(HttpResponse::Ok().content_type("application/json").finish())
 }

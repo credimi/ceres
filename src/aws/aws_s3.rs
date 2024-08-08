@@ -33,7 +33,7 @@ impl S3Client {
         data: &[u8],
         vat_number: &String,
         user: &String,
-        format: QrpFormat,
+        format: &QrpFormat,
     ) -> anyhow::Result<()> {
         let now = Utc::now();
         let date_time = now.format("%d_%m_%Y_%H:%M:%S");
