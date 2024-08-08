@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
@@ -12,10 +12,10 @@ pub enum QrpFormat {
 }
 
 impl QrpFormat {
-    pub fn value(&self) -> String {
+    pub fn as_str(&self) -> &str {
         match &self {
-            QrpFormat::Pdf => "pdf".to_owned(),
-            QrpFormat::Xml => "xml".to_owned(),
+            QrpFormat::Pdf => "pdf",
+            QrpFormat::Xml => "xml",
         }
     }
 }
@@ -26,27 +26,10 @@ impl Display for QrpFormat {
     }
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum QrpProduct {
-    Qrp = 62001,
-}
-
-impl Serialize for QrpProduct {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.value().as_str())
-    }
-}
-
-impl QrpProduct {
-    fn value(&self) -> String {
-        match &self {
-            QrpProduct::Qrp => "62001".to_owned(),
-        }
-    }
+    #[serde(rename = "62001")]
+    Qrp,
 }
 
 #[derive(Serialize, Debug)]
@@ -92,16 +75,10 @@ mod tests {
     #[test]
     fn test_qrp_format() {
         let pdf = QrpFormat::Pdf;
-        assert_eq!(pdf.value(), "pdf");
+        assert_eq!(pdf.as_str(), "pdf");
 
         let xml = QrpFormat::Xml;
-        assert_eq!(xml.value(), "xml");
-    }
-
-    #[test]
-    fn test_qrp_product() {
-        let qrp = QrpProduct::Qrp;
-        assert_eq!(qrp.value(), "62001");
+        assert_eq!(xml.as_str(), "xml");
     }
 
     #[test]

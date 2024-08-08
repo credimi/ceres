@@ -37,7 +37,7 @@ impl S3Client {
     ) -> anyhow::Result<()> {
         let now = Utc::now();
         let date_time = now.format("%d_%m_%Y_%H:%M:%S");
-        let lower_case_format = format.value();
+        let lower_case_format = format.as_str();
         let file = format!("qrp/{vat_number}/{date_time}_{user}.{lower_case_format}");
 
         if self.aws_conf.s3_dry_run {
