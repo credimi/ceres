@@ -6,7 +6,6 @@ use crate::qrp::cerved_qrp::CervedQrpClient;
 use crate::qrp::{QrpFormat, QrpProduct, QrpRequest, SubjectType};
 use actix_web::web::{Data, Path, Query};
 use actix_web::{post, HttpResponse};
-use base64::Engine;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -58,6 +57,7 @@ pub async fn generate_cerved_qrp(
     query: Query<QrpQuery>,
 ) -> IoResult<HttpResponse> {
     let qrp_client = &app_data.cerved_qrp_client;
+    let s3_client = &app_data.aws_s3_client;
 
     let vat_number = path.into_inner();
     let user = query.user.clone();
@@ -78,18 +78,12 @@ pub async fn generate_cerved_qrp(
 
     match result {
         Ok(res) => {
-            let _res = res.clone();
-            let data = base64::engine::general_purpose::STANDARD
-                .decode(
-                    res.content
-                        .unwrap_or_else(|| panic!("No content found in response: {:?}", _res)),
-                )
-                .expect("Invalid base64");
+            let data = res.decode_content();
 
             info!(
-                "Uploading to S3: QRP XML for vat {} by user {} with requestId: {:?}", vat_number, user, res.request_id
+                "Uploading to S3: QRP XML for vat {} by user {} with requestId: {:?}",
+                vat_number, user, res.request_id
             );
-            let s3_client = &app_data.aws_s3_client;
             let upload_res = s3_client.upload(&data, &vat_number, &user, QrpFormat::Xml).await;
             match upload_res {
                 Ok(_) => {
@@ -102,22 +96,18 @@ pub async fn generate_cerved_qrp(
             }
 
             info!(
-                "Requesting QRP PDF for user {} with requestId: {:?}", user, res.request_id
+                "Requesting QRP PDF for user {} with requestId: {:?}",
+                user, res.request_id
             );
             let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, &QrpFormat::Pdf).await;
 
             match result_pdf {
                 Ok(pdf) => {
-                    let _pdf = pdf.clone();
-                    let data = base64::engine::general_purpose::STANDARD
-                        .decode(
-                            pdf.content
-                                .unwrap_or_else(|| panic!("No content found in response: {:?}", _pdf)),
-                        )
-                        .expect("Invalid base64");
+                    let data = pdf.decode_content();
 
                     info!(
-                        "Uploading to S3: QRP PDF for user {} with requestId: {:?}", user, res.request_id
+                        "Uploading to S3: QRP PDF for user {} with requestId: {:?}",
+                        user, res.request_id
                     );
                     let upload_res = s3_client.upload(&data, &vat_number, &user, QrpFormat::Xml).await;
 

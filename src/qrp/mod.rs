@@ -1,3 +1,4 @@
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
@@ -67,6 +68,18 @@ pub struct QrpResponse {
     pub request_id: u32,
 }
 
+impl QrpResponse {
+    pub fn decode_content(&self) -> Vec<u8> {
+        base64::engine::general_purpose::STANDARD
+            .decode(
+                self.content
+                    .as_ref()
+                    .unwrap_or_else(|| panic!("No content found in response: {:?}", self)),
+            )
+            .expect("Invalid base64")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,5 +108,17 @@ mod tests {
         let actual_json = serde_json::to_string(&request).unwrap();
 
         assert_eq!(expected_json, actual_json);
+    }
+    
+    #[test]
+    fn test_decode_content() {
+        let response = QrpResponse {
+            content: Some("SGVsbG8gV29ybGQh".to_owned()),
+            delivery_status: DeliveryStatus::Ok,
+            format: QrpFormat::Pdf,
+            request_id: 1,
+        };
+        let content = response.decode_content();
+        assert_eq!(content, b"Hello World!".to_vec());
     }
 }
