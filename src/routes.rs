@@ -49,7 +49,6 @@ pub struct InternalError {
 #[allow(non_snake_case)]
 struct QrpQuery {
     user: String,
-    maxTtl: u32,
 }
 
 #[post("/qrp/{vat_number}")]
@@ -62,9 +61,6 @@ pub async fn generate_cerved_qrp(
 
     let vat_number = path.into_inner();
     let user = query.user.clone();
-
-    // TODO: should be still used?
-    let _ = query.maxTtl;
 
     let reference = Uuid::now_v7();
 
