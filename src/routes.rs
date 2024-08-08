@@ -55,7 +55,7 @@ struct QrpQuery {
 }
 
 #[post("/qrp/{vat_number}")]
-pub async fn call_cerved_qrp(
+pub async fn generate_cerved_qrp(
     app_data: Data<AppConfig>,
     path: Path<String>,
     query: Query<QrpQuery>,

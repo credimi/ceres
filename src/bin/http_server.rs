@@ -43,7 +43,7 @@ async fn main() -> IoResult<()> {
                 aws_s3_client: s3_client.clone(),
             }))
             .service(healthz)
-            .service(call_cerved_qrp)
+            .service(generate_cerved_qrp)
     })
     .bind(listen_addr)?
     .run()
