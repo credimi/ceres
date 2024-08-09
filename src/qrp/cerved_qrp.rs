@@ -59,7 +59,7 @@ impl CervedQrpClient {
             .await
     }
 
-    /// Read the QRP with request_id in the specified format. If the response status is "deferred", returns an error so that the call can be retried
+    /// Read the QRP with request_id in the specified format. If the response status is "deferred", returns an errors so that the call can be retried
     async fn read_qrp(&self, token: &String, request_id: u32, format: &QrpFormat) -> anyhow::Result<QrpResponse> {
         let res = self
             .http_client

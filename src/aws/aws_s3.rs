@@ -1,7 +1,5 @@
-use crate::qrp::QrpFormat;
 use aws_sdk_s3::config::BehaviorVersion;
 use aws_sdk_s3::primitives::ByteStream;
-use chrono::Utc;
 use clap::Parser;
 use tracing::info;
 
@@ -28,18 +26,7 @@ impl S3Client {
         })
     }
 
-    pub async fn upload(
-        &self,
-        data: &[u8],
-        vat_number: &String,
-        user: &String,
-        format: &QrpFormat,
-    ) -> anyhow::Result<()> {
-        let now = Utc::now();
-        let date_time = now.format("%d_%m_%Y_%H:%M:%S");
-        let lower_case_format = format.as_str();
-        let file = format!("qrp/{vat_number}/{date_time}_{user}.{lower_case_format}");
-
+    pub async fn upload(&self, data: &[u8], file_name: &String) -> anyhow::Result<()> {
         if self.aws_conf.s3_dry_run {
             info!("Dry run: not uploading to S3");
             return Ok(());
@@ -49,12 +36,12 @@ impl S3Client {
             .client
             .put_object()
             .bucket(&self.aws_conf.qrp_bucket_name)
-            .key(&file)
+            .key(file_name)
             .set_body(Option::from(ByteStream::from(data.to_owned())))
             .send()
             .await?)
         .map(|_res| {
-            info!("Uploaded to S3: {}", file);
+            info!("Uploaded to S3: {}", file_name);
         })
     }
 }

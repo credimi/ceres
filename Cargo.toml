@@ -28,6 +28,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json"] }
 url = "2.5"
 uuid = { version = "1.10", features = ["fast-rng", "v7", "serde"] }
+thiserror = "1.0.63"
 
 [[bin]]
 name = "http_server"

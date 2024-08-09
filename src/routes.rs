@@ -1,13 +1,16 @@
+use std::fmt::{Debug, Display, Formatter};
 use std::io::Result as IoResult;
 
 use crate::auth::CervedOAuthConfig;
 use crate::aws::aws_s3::{AwsConf, S3Client};
+use crate::errors::ErrorKind::{CervedError, S3Error};
 use crate::qrp::cerved_qrp::CervedQrpClient;
 use crate::qrp::{QrpFormat, QrpProduct, QrpRequest, QrpResponse, SubjectType};
 use actix_web::web::{Data, Path, Query};
 use actix_web::{get, post, HttpResponse};
+use chrono::Utc;
 use clap::Parser;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 use serde_json::json;
 use tracing::{error, info};
 use uuid::Uuid;
@@ -33,17 +36,6 @@ pub struct AppConfig {
     pub aws_s3_client: S3Client,
 }
 
-#[derive(Serialize)]
-pub enum ErrorKind {
-    DatabaseError,
-}
-
-#[derive(Serialize)]
-pub struct InternalError {
-    pub kind: ErrorKind,
-    pub reason: String,
-}
-
 #[derive(Deserialize)]
 #[allow(non_snake_case)]
 struct QrpQuery {
@@ -55,7 +47,7 @@ pub async fn generate_cerved_qrp(
     app_data: Data<AppConfig>,
     path: Path<String>,
     query: Query<QrpQuery>,
-) -> IoResult<HttpResponse> {
+) -> Result<HttpResponse, Box<dyn std::error::Error>> {
     let qrp_client = &app_data.cerved_qrp_client;
     let s3_client = &app_data.aws_s3_client;
 
@@ -74,48 +66,60 @@ pub async fn generate_cerved_qrp(
     };
 
     info!("Requesting QRP XML for user {} with req: {:?}", user, &qrp_req);
-    let result = qrp_client.generate_qrp_with_retry(&qrp_req).await;
+    let res = qrp_client.generate_qrp_with_retry(&qrp_req).await.map_err(|e| {
+        error!("Failed to generate QRP for vat {}: {:?}", vat_number, e);
+        CervedError
+    })?;
+    let xml_url = content_upload(s3_client, &vat_number, &user, &res).await.map_err(|e| {
+        error!("Failed to upload QRP XML for vat {}: {:?}", vat_number, e);
+        S3Error
+    })?;
 
-    match result {
-        Ok(res) => {
-            content_upload(s3_client, &vat_number, &user, &res).await;
+    info!(
+        "Requesting QRP PDF for user {} with requestId: {:?}",
+        user, res.request_id
+    );
+    let pdf = qrp_client
+        .read_qrp_with_retry(res.request_id, QrpFormat::Pdf)
+        .await
+        .map_err(|e| {
+            error!("Failed to generate QRP PDF for vat {}: {:?}", vat_number, e);
+            CervedError
+        })?;
+    let pdf_url = content_upload(s3_client, &vat_number, &user, &pdf).await.map_err(|e| {
+        error!("Failed to upload QRP PDF for vat {}: {:?}", vat_number, e);
+        S3Error
+    })?;
 
-            info!(
-                "Requesting QRP PDF for user {} with requestId: {:?}",
-                user, res.request_id
-            );
-            let result_pdf = qrp_client.read_qrp_with_retry(res.request_id, QrpFormat::Pdf).await;
-
-            match result_pdf {
-                Ok(pdf) => {
-                    content_upload(s3_client, &vat_number, &user, &pdf).await;
-
-                    Ok(HttpResponse::Created().finish())
-                }
-                Err(_) => Ok(HttpResponse::BadGateway()
-                    .json(json!({ "message": "unable to retrieve PDF", "reference":  reference }))),
-            }
-        }
-        Err(_) => Ok(
-            HttpResponse::BadGateway().json(json!({ "message": "unable to retrieve XML", "reference":  reference }))
-        ),
-    }
+    Ok(HttpResponse::Created().json(json!({"pdf_url": pdf_url, "xml_url": xml_url})))
 }
 
-async fn content_upload(s3_client: &S3Client, vat_number: &String, user: &String, res: &QrpResponse) {
+async fn content_upload(
+    s3_client: &S3Client,
+    vat_number: &String,
+    user: &String,
+    res: &QrpResponse,
+) -> anyhow::Result<String> {
     info!(
         "Uploading to S3: QRP {} for vat {} by user {} with requestId: {:?}",
         res.format, vat_number, user, res.request_id
     );
     let data = res.decode_content();
-    let upload_res = s3_client.upload(&data, vat_number, user, &res.format).await;
+    let now = Utc::now();
+    let date_time = now.format("%d_%m_%Y_%H:%M:%S");
+    let lower_case_format = res.format.as_str();
+    let file_name = format!("qrp/{vat_number}/{date_time}_{user}.{lower_case_format}");
+
+    let upload_res = s3_client.upload(&data, &file_name).await;
     match upload_res {
         Ok(_) => {
-            info!("Uploaded QRP {} for vat {}", res.format, vat_number)
+            info!("Uploaded QRP {} for vat {}", res.format, vat_number);
+            Ok(file_name)
         }
         Err(_) => {
-            // TODO: should we return an error here?
-            error!("Failed upload QRP {} for vat {}", res.format, vat_number)
+            // TODO: should we return an errors here?
+            error!("Failed upload QRP {} for vat {}", res.format, vat_number);
+            Err(anyhow::anyhow!("Failed to upload QRP"))
         }
     }
 }
