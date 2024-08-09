@@ -14,12 +14,12 @@ pub async fn request_qrp(
     vat_number: String,
     user: String,
     qrp_req: &QrpRequest,
-) -> Result<Result<HttpResponse, Box<dyn Error>>, Box<dyn Error>> {
+) -> Result<HttpResponse, Box<dyn Error>> {
     let result = qrp_client.generate_qrp(qrp_req).await;
 
     Ok(if let Ok(response) = result {
         match response {
-            QrpOrDeferred::Qrp(res) => Ok(get_and_upload(qrp_client, s3_client, &vat_number, &user, &res).await?),
+            QrpOrDeferred::Qrp(res) => get_and_upload(qrp_client, s3_client, &vat_number, &user, &res).await?,
             QrpOrDeferred::Deferred(deferred_res) => {
                 // TODO: save the request on db and try later
                 tokio::spawn(async move {
@@ -31,12 +31,12 @@ pub async fn request_qrp(
                         .await
                         .expect("Failed to upload QRP");
                 });
-                Ok(HttpResponse::Accepted().json(json!({"message": "QRP generation requested"})))
+                HttpResponse::Accepted().json(json!({"message": "QRP generation requested"}))
             }
         }
     } else {
         error!("Failed to generate QRP for vat {}: {:?}", vat_number, &result.err());
-        Err(CervedError.into())
+        CervedError.error_response()
     })
 }
 
@@ -46,7 +46,7 @@ async fn get_and_upload(
     vat_number: &String,
     user: &String,
     res: &QrpResponse,
-) -> Result<HttpResponse, Box<dyn std::error::Error>> {
+) -> Result<HttpResponse, Box<dyn Error>> {
     let xml_url = content_upload(&s3_client, vat_number, user, res).await.map_err(|e| {
         error!("Failed to upload QRP XML for vat {}: {:?}", vat_number, e);
         S3Error

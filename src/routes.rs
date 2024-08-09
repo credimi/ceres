@@ -65,7 +65,7 @@ pub async fn generate_cerved_qrp(
     };
 
     info!("Requesting QRP XML for user {} with req: {:?}", user, &qrp_req);
-    request_qrp(qrp_client, s3_client, vat_number, user, &qrp_req).await?
+    request_qrp(qrp_client, s3_client, vat_number, user, &qrp_req).await
 }
 
 #[get("/api/v1/healthz")]
