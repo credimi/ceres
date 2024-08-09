@@ -21,9 +21,6 @@ COPY . .
 RUN cargo build --release
 RUN cargo test --release --no-run
 
-FROM credimi/diesel-migrations:60cc08a as migrations
-CMD ["./run_migrations.sh"]
-
 FROM debian:bullseye-slim as runtime
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends ca-certificates libpq5 \
