@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
 pub mod cerved_qrp;
+pub mod qrp_service;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
