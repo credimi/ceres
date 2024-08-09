@@ -188,7 +188,7 @@
           "callbacks": []
         }
       ],
-      "responseMode": null
+      "responseMode": "DISABLE_RULES"
     },
     {
       "uuid": "507d1365-90e3-4997-a92f-2f6d9e3c8394",

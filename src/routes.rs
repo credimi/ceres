@@ -4,7 +4,7 @@ use std::io::Result as IoResult;
 use crate::auth::CervedOAuthConfig;
 use crate::aws::aws_s3::{AwsConf, S3Client};
 use crate::errors::ErrorKind::{CervedError, S3Error};
-use crate::qrp::cerved_qrp::CervedQrpClient;
+use crate::qrp::cerved_qrp::{CervedQrpClient, QrpOrDeferred};
 use crate::qrp::{QrpFormat, QrpProduct, QrpRequest, QrpResponse, SubjectType};
 use actix_web::web::{Data, Path, Query};
 use actix_web::{get, post, HttpResponse};
@@ -68,22 +68,26 @@ pub async fn generate_cerved_qrp(
     info!("Requesting QRP XML for user {} with req: {:?}", user, &qrp_req);
     let result = qrp_client.generate_qrp(&qrp_req).await;
 
-    match result {
-        Ok(res) => Ok(get_and_upload(qrp_client, s3_client, &vat_number, &user, &res).await?),
-        Err(_) => {
-            // TODO: save the request on db and try later
-            tokio::spawn(async move {
-                let res = qrp_client
-                    .generate_qrp_with_retry(&qrp_req)
-                    .await
-                    .expect("Failed to generate QRP");
-                get_and_upload(qrp_client, s3_client, &vat_number, &user, &res)
-                    .await
-                    .expect("Failed to upload QRP");
-            });
-
-            Ok(HttpResponse::Accepted().json(json!({"message": "QRP generation requested"})))
+    if let Ok(response) = result {
+        match response {
+            QrpOrDeferred::Qrp(res) => Ok(get_and_upload(qrp_client, s3_client, &vat_number, &user, &res).await?),
+            QrpOrDeferred::Deferred(deferred_res) => {
+                // TODO: save the request on db and try later
+                tokio::spawn(async move {
+                    let res = qrp_client
+                        .read_qrp_with_retry(deferred_res.request_id, deferred_res.format)
+                        .await
+                        .expect("Failed to generate QRP");
+                    get_and_upload(qrp_client, s3_client, &vat_number, &user, &res)
+                        .await
+                        .expect("Failed to upload QRP");
+                });
+                Ok(HttpResponse::Accepted().json(json!({"message": "QRP generation requested"})))
+            }
         }
+    } else {
+        error!("Failed to generate QRP for vat {}: {:?}", vat_number, &result.err());
+        Err(CervedError.into())
     }
 }
 

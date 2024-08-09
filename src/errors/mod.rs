@@ -22,12 +22,14 @@ where
 
 #[derive(thiserror::Error, Debug)]
 pub enum ErrorKind {
-    #[error("Internal Server Error")]
-    InternalServerError,
-    #[error("Database error")]
-    DatabaseError,
     #[error("Cerved error")]
     CervedError,
+    #[error("Database error")]
+    DatabaseError,
+    #[error("Deferred")]
+    DeferredError,
+    #[error("Internal Server Error")]
+    InternalServerError,
     #[error("S3 error")]
     S3Error,
 }
@@ -35,10 +37,11 @@ pub enum ErrorKind {
 impl ErrorKind {
     pub(crate) fn error_response(&self) -> HttpResponse {
         match self {
-            ErrorKind::InternalServerError => HttpResponse::InternalServerError().finish(),
-            ErrorKind::DatabaseError => HttpResponse::InternalServerError().finish(),
             ErrorKind::CervedError => HttpResponse::BadGateway().finish(),
+            ErrorKind::DatabaseError => HttpResponse::InternalServerError().finish(),
+            ErrorKind::DeferredError => HttpResponse::NotFound().finish(),
             ErrorKind::S3Error => HttpResponse::BadGateway().finish(),
+            _ => HttpResponse::InternalServerError().finish(),
         }
     }
 }

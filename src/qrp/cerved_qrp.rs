@@ -1,7 +1,7 @@
 use crate::auth::cerved_auth::CervedOAuthClient;
 use crate::auth::CervedOAuthConfig;
+use crate::errors::ErrorKind::DeferredError;
 use crate::qrp::{DeliveryStatus, QrpFormat, QrpRequest, QrpResponse};
-use anyhow::anyhow;
 use backon::{ExponentialBuilder, Retryable};
 
 #[derive(Clone)]
@@ -9,6 +9,11 @@ pub struct CervedQrpClient {
     http_client: reqwest::Client,
     cerved_api_base_url: String,
     cerved_oauth_client: CervedOAuthClient,
+}
+
+pub enum QrpOrDeferred {
+    Qrp(QrpResponse),
+    Deferred(QrpResponse),
 }
 
 impl CervedQrpClient {
@@ -41,15 +46,15 @@ impl CervedQrpClient {
         }
     }
 
-    /// Generates the QRP. Returns error if "deferred"
-    pub async fn generate_qrp(&self, qrp_request: &QrpRequest) -> anyhow::Result<QrpResponse> {
+    /// Generates the QRP. Returns QrpOrDeferred::Deferred if status "deferred"
+    pub async fn generate_qrp(&self, qrp_request: &QrpRequest) -> anyhow::Result<QrpOrDeferred> {
         let _token = self.cerved_oauth_client.get_access_token(&self.http_client).await?;
         let token = _token.clone();
         let qrp_response = self.call_qrp(qrp_request, token).await?;
 
         match qrp_response.delivery_status {
-            DeliveryStatus::Ok => Ok(qrp_response),
-            DeliveryStatus::Deferred => anyhow::bail!("deferred"),
+            DeliveryStatus::Ok => Ok(QrpOrDeferred::Qrp(qrp_response)),
+            DeliveryStatus::Deferred => Ok(QrpOrDeferred::Deferred(qrp_response)),
         }
     }
 
@@ -79,7 +84,7 @@ impl CervedQrpClient {
 
         match res.delivery_status {
             DeliveryStatus::Ok => Ok(res),
-            DeliveryStatus::Deferred => Err(anyhow!("deferred")),
+            DeliveryStatus::Deferred => Err(DeferredError.into()),
         }
     }
 
