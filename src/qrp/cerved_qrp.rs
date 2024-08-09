@@ -24,15 +24,7 @@ impl CervedQrpClient {
     pub async fn generate_qrp_with_retry(&self, qrp_request: &QrpRequest) -> anyhow::Result<QrpResponse> {
         let _token = self.cerved_oauth_client.get_access_token(&self.http_client).await?;
         let token = _token.clone();
-        let qrp_response = self
-            .http_client
-            .post(format!("{}/cervedApiB2B/v1/purchase", self.cerved_api_base_url))
-            .bearer_auth(token)
-            .json(qrp_request)
-            .send()
-            .await?
-            .json::<QrpResponse>()
-            .await?;
+        let qrp_response = self.call_qrp(qrp_request, token).await?;
 
         match qrp_response.delivery_status {
             DeliveryStatus::Ok => Ok(qrp_response),
@@ -46,6 +38,18 @@ impl CervedQrpClient {
                     .when(|err| err.to_string() == "deferred")
                     .await?)
             }
+        }
+    }
+
+    /// Generates the QRP. Returns error if "deferred"
+    pub async fn generate_qrp(&self, qrp_request: &QrpRequest) -> anyhow::Result<QrpResponse> {
+        let _token = self.cerved_oauth_client.get_access_token(&self.http_client).await?;
+        let token = _token.clone();
+        let qrp_response = self.call_qrp(qrp_request, token).await?;
+
+        match qrp_response.delivery_status {
+            DeliveryStatus::Ok => Ok(qrp_response),
+            DeliveryStatus::Deferred => anyhow::bail!("deferred"),
         }
     }
 
@@ -77,5 +81,16 @@ impl CervedQrpClient {
             DeliveryStatus::Ok => Ok(res),
             DeliveryStatus::Deferred => Err(anyhow!("deferred")),
         }
+    }
+
+    async fn call_qrp(&self, qrp_request: &QrpRequest, token: String) -> reqwest::Result<QrpResponse> {
+        self.http_client
+            .post(format!("{}/cervedApiB2B/v1/purchase", self.cerved_api_base_url))
+            .bearer_auth(token)
+            .json(qrp_request)
+            .send()
+            .await?
+            .json::<QrpResponse>()
+            .await
     }
 }

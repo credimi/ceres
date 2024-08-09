@@ -10,7 +10,7 @@ use actix_web::web::{Data, Path, Query};
 use actix_web::{get, post, HttpResponse};
 use chrono::Utc;
 use clap::Parser;
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::json;
 use tracing::{error, info};
 use uuid::Uuid;
@@ -48,8 +48,8 @@ pub async fn generate_cerved_qrp(
     path: Path<String>,
     query: Query<QrpQuery>,
 ) -> Result<HttpResponse, Box<dyn std::error::Error>> {
-    let qrp_client = &app_data.cerved_qrp_client;
-    let s3_client = &app_data.aws_s3_client;
+    let qrp_client = app_data.cerved_qrp_client.clone();
+    let s3_client = app_data.aws_s3_client.clone();
 
     let vat_number = path.into_inner();
     let user = query.user.clone();
@@ -66,11 +66,35 @@ pub async fn generate_cerved_qrp(
     };
 
     info!("Requesting QRP XML for user {} with req: {:?}", user, &qrp_req);
-    let res = qrp_client.generate_qrp_with_retry(&qrp_req).await.map_err(|e| {
-        error!("Failed to generate QRP for vat {}: {:?}", vat_number, e);
-        CervedError
-    })?;
-    let xml_url = content_upload(s3_client, &vat_number, &user, &res).await.map_err(|e| {
+    let result = qrp_client.generate_qrp(&qrp_req).await;
+
+    match result {
+        Ok(res) => Ok(get_and_upload(qrp_client, s3_client, &vat_number, &user, &res).await?),
+        Err(_) => {
+            // TODO: save the request on db and try later
+            tokio::spawn(async move {
+                let res = qrp_client
+                    .generate_qrp_with_retry(&qrp_req)
+                    .await
+                    .expect("Failed to generate QRP");
+                get_and_upload(qrp_client, s3_client, &vat_number, &user, &res)
+                    .await
+                    .expect("Failed to upload QRP");
+            });
+
+            Ok(HttpResponse::Accepted().json(json!({"message": "QRP generation requested"})))
+        }
+    }
+}
+
+async fn get_and_upload(
+    qrp_client: CervedQrpClient,
+    s3_client: S3Client,
+    vat_number: &String,
+    user: &String,
+    res: &QrpResponse,
+) -> Result<HttpResponse, Box<dyn std::error::Error>> {
+    let xml_url = content_upload(&s3_client, vat_number, user, res).await.map_err(|e| {
         error!("Failed to upload QRP XML for vat {}: {:?}", vat_number, e);
         S3Error
     })?;
@@ -86,7 +110,7 @@ pub async fn generate_cerved_qrp(
             error!("Failed to generate QRP PDF for vat {}: {:?}", vat_number, e);
             CervedError
         })?;
-    let pdf_url = content_upload(s3_client, &vat_number, &user, &pdf).await.map_err(|e| {
+    let pdf_url = content_upload(&s3_client, vat_number, user, &pdf).await.map_err(|e| {
         error!("Failed to upload QRP PDF for vat {}: {:?}", vat_number, e);
         S3Error
     })?;

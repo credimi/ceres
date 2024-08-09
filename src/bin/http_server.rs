@@ -10,7 +10,7 @@ use tracing::info;
 
 #[actix_web::main]
 async fn main() -> IoResult<()> {
-    tracing_subscriber::fmt().json().init();
+    tracing_subscriber::fmt::init();
 
     let cli = Cli::parse();
     let http_client_config = cli.http_client_config;
